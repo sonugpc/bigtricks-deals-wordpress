@@ -325,8 +325,8 @@ get_header(); ?>
 
 <?php
 // Enqueue deal page assets
-wp_enqueue_style( 'bt-deals-single', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/bt-deals-single.css', [], $this->version );
-wp_enqueue_script( 'bt-deals-single', plugin_dir_url( dirname( __FILE__ ) ) . 'public/js/bt-deals-single.js', ['jquery'], $this->version, true );
+wp_enqueue_style( 'bt-deals-single', plugin_dir_url( dirname( __FILE__ ) ) . 'public/css/bt-deals-single.css', [], BTDEALS_VERSION );
+wp_enqueue_script( 'bt-deals-single', plugin_dir_url( dirname( __FILE__ ) ) . 'public/js/bt-deals-single.js', ['jquery'], BTDEALS_VERSION, true );
 wp_localize_script( 'bt-deals-single', 'btDealsAjax', [
 	'ajaxurl' => admin_url( 'admin-ajax.php' ),
 	'nonce' => wp_create_nonce( 'bt_deals_nonce' ),
