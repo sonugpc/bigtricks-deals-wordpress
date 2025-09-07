@@ -1,0 +1,776 @@
+/**
+ * Single Deal Page CSS - Minimalistic Design
+ * Clean, modern styling with rounded corners and responsive fonts
+ */
+
+/* Reset and Base Styles */
+.bt-deal-page {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+	line-height: 1.6;
+	color: #333;
+	background-color: #f8f9fa;
+	min-height: 100vh;
+}
+
+/* Hero Section - Full Width */
+.bt-deal-hero-wrapper {
+	background: #ffffff;
+	padding: 0;
+	margin: 0;
+}
+
+.bt-deal-hero {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 40px;
+	position: relative;
+	background: #ffffff;
+	border: 1px solid #e9ecef;
+	border-radius: 16px;
+	margin-top: 20px;
+	margin-bottom: 30px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Category Chips */
+.bt-category-chips {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 20px;
+	flex-wrap: wrap;
+}
+
+.bt-category-chip {
+	background: #e3f2fd;
+	color: #1565c0;
+	padding: 4px 12px;
+	border-radius: 20px;
+	font-size: clamp(0.7rem, 2vw, 0.8rem);
+	font-weight: 500;
+	border: 1px solid #bbdefb;
+}
+
+/* Hero Content Layout */
+.bt-hero-content {
+	display: grid;
+	grid-template-columns: 200px 1fr 200px;
+	gap: 30px;
+	align-items: start;
+}
+
+.bt-hero-left {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+}
+
+.bt-hero-center {
+	text-align: left;
+}
+
+.bt-hero-right {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+}
+
+/* Responsive Typography */
+.bt-product-title {
+	font-size: clamp(1.5rem, 4vw, 2.2rem);
+	font-weight: 700;
+	margin: 0 0 15px;
+	color: #212529;
+	line-height: 1.2;
+}
+
+.bt-product-description {
+	color: #6c757d;
+	font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+	margin: 0 0 25px;
+	line-height: 1.5;
+}
+
+.bt-price-section {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	margin-bottom: 20px;
+	flex-wrap: wrap;
+}
+
+.bt-current-price {
+	font-size: clamp(1.8rem, 5vw, 2.5rem);
+	font-weight: 800;
+	color: #28a745;
+	letter-spacing: -0.5px;
+}
+
+.bt-original-price {
+	font-size: clamp(1.2rem, 3vw, 1.5rem);
+	color: #dc3545;
+	opacity: 0.8;
+}
+
+.bt-discount-badge {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	background: #ff4757;
+	color: white;
+	padding: 10px 20px;
+	border-radius: 25px;
+	font-weight: 700;
+	font-size: clamp(0.7rem, 2vw, 0.9rem);
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+	z-index: 10;
+}
+
+/* Images */
+.bt-product-image {
+	width: 100%;
+	max-width: 200px;
+	height: auto;
+	border-radius: 12px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+	transition: transform 0.3s ease;
+}
+
+.bt-product-image:hover {
+	transform: scale(1.02);
+}
+
+.bt-store-image {
+	width: 80px;
+	height: 80px;
+	object-fit: contain;
+	border-radius: 8px;
+	border: 1px solid #e9ecef;
+	padding: 8px;
+	background: white;
+}
+
+/* Hero CTA Section */
+.bt-hero-cta {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+	align-items: center;
+}
+
+.bt-main-cta {
+	background: #007cba;
+	color: white;
+	padding: 16px 32px;
+	border-radius: 12px;
+	font-size: clamp(1rem, 2.5vw, 1.2rem);
+	font-weight: 600;
+	text-decoration: none;
+	display: inline-block;
+	transition: all 0.3s ease;
+	border: none;
+	box-shadow: 0 4px 16px rgba(0, 124, 186, 0.3);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	min-width: 160px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.bt-main-cta:hover {
+	background: #005a87;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 24px rgba(0, 124, 186, 0.4);
+	color: white;
+	text-decoration: none;
+}
+
+.bt-main-cta.bt-expired {
+	background: #6c757d;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+.bt-main-cta.bt-expired:hover {
+	background: #6c757d;
+	transform: none;
+}
+
+/* Coupon Section */
+.bt-coupon-section {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin-top: 15px;
+	justify-content: flex-start;
+}
+
+.bt-coupon-label {
+	font-weight: 600;
+	color: #495057;
+	font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+.bt-coupon-code {
+	background: #f8f9fa;
+	border: 2px dashed #28a745;
+	padding: 8px 12px;
+	border-radius: 6px;
+	font-family: 'Courier New', monospace;
+	font-weight: bold;
+	color: #28a745;
+	font-size: clamp(0.9rem, 2vw, 1rem);
+}
+
+.bt-coupon-reveal {
+	background: #ffc107;
+	color: #000;
+	border: none;
+	padding: 8px 16px;
+	border-radius: 6px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.3s ease;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+.bt-coupon-reveal:hover {
+	background: #e0a800;
+}
+
+/* Content Layout */
+.bt-content-wrapper {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+	display: grid;
+	grid-template-columns: 1fr 320px;
+	gap: 40px;
+	align-items: start;
+}
+
+.bt-content-main {
+	background: white;
+	padding: 30px;
+	border-radius: 12px;
+	border: 1px solid #e9ecef;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.bt-content-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+/* Expiry Info */
+.bt-expiry-info {
+	background: #fff3cd;
+	border: 1px solid #ffeaa7;
+	border-radius: 8px;
+	padding: 15px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 20px;
+	font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+.bt-expiry-label {
+	font-weight: 600;
+	color: #856404;
+}
+
+.bt-expiry-info time {
+	color: #856404;
+	font-weight: 500;
+}
+
+/* Deal Description */
+.bt-deal-description {
+	font-size: clamp(0.9rem, 2.5vw, 1rem);
+	line-height: 1.7;
+}
+
+.bt-deal-description h2,
+.bt-deal-description h3,
+.bt-deal-description h4 {
+	color: #212529;
+	margin-top: 25px;
+	margin-bottom: 15px;
+}
+
+.bt-deal-description h2 {
+	font-size: clamp(1.2rem, 3vw, 1.5rem);
+}
+
+.bt-deal-description h3 {
+	font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+}
+
+.bt-deal-description ul,
+.bt-deal-description ol {
+	padding-left: 20px;
+	margin-bottom: 15px;
+}
+
+.bt-deal-description li {
+	margin-bottom: 5px;
+}
+
+/* Disclaimer */
+.bt-disclaimer {
+	background: #f8d7da;
+	border: 1px solid #f5c6cb;
+	border-radius: 8px;
+	padding: 20px;
+	margin-top: 30px;
+}
+
+.bt-disclaimer h3 {
+	color: #721c24;
+	font-size: clamp(1rem, 2.5vw, 1.2rem);
+	margin: 0 0 10px;
+}
+
+.bt-disclaimer-content {
+	color: #721c24;
+	font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+/* Sidebar Cards */
+.bt-deal-info-card,
+.bt-share-card {
+	background: white;
+	border: 1px solid #e9ecef;
+	border-radius: 12px;
+	padding: 20px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.bt-deal-info-card h3,
+.bt-share-card h4 {
+	margin: 0 0 15px;
+	color: #212529;
+	font-size: clamp(1rem, 2.5vw, 1.1rem);
+	font-weight: 600;
+}
+
+.bt-brand-logo {
+	width: 80px;
+	height: 80px;
+	object-fit: contain;
+	border-radius: 8px;
+	margin-bottom: 15px;
+	border: 1px solid #e9ecef;
+	padding: 8px;
+}
+
+.bt-info-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 0;
+	border-bottom: 1px solid #f8f9fa;
+	font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+.bt-info-item:last-child {
+	border-bottom: none;
+}
+
+.bt-info-label {
+	font-weight: 600;
+	color: #495057;
+}
+
+.bt-info-value {
+	color: #212529;
+}
+
+.bt-info-value.bt-verified {
+	color: #28a745;
+	font-weight: 600;
+}
+
+/* Share Buttons */
+.bt-share-buttons {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.bt-share-btn {
+	background: #f8f9fa;
+	border: 1px solid #dee2e6;
+	border-radius: 8px;
+	padding: 10px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+}
+
+.bt-share-btn:hover {
+	background: #e9ecef;
+	transform: translateY(-1px);
+}
+
+.bt-share-btn[data-share="facebook"]:hover {
+	background: #1877f2;
+	border-color: #1877f2;
+	color: white;
+}
+
+.bt-share-btn[data-share="twitter"]:hover {
+	background: #1da1f2;
+	border-color: #1da1f2;
+	color: white;
+}
+
+.bt-share-btn[data-share="whatsapp"]:hover {
+	background: #25d366;
+	border-color: #25d366;
+	color: white;
+}
+
+.bt-share-btn[data-share="copy"]:hover {
+	background: #6c757d;
+	border-color: #6c757d;
+	color: white;
+}
+
+/* Similar Deals Carousel */
+.bt-similar-deals {
+	max-width: 1200px;
+	margin: 50px auto 0;
+	padding: 0 20px;
+}
+
+.bt-similar-deals h2 {
+	color: #212529;
+	font-size: clamp(1.4rem, 4vw, 1.8rem);
+	margin-bottom: 30px;
+	text-align: center;
+}
+
+.bt-deals-carousel {
+	position: relative;
+	overflow: hidden;
+	border-radius: 12px;
+}
+
+.bt-loading-deals {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 15px;
+	padding: 60px;
+	background: white;
+	border: 1px solid #e9ecef;
+	border-radius: 12px;
+	color: #6c757d;
+}
+
+.bt-loading {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	border: 3px solid rgba(0, 0, 0, .1);
+	border-radius: 50%;
+	border-top-color: #007cba;
+	animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+/* Carousel Items */
+.bt-carousel-container {
+	display: flex;
+	transition: transform 0.3s ease;
+	gap: 20px;
+}
+
+.bt-carousel-item {
+	flex: 0 0 280px;
+	background: white;
+	border: 1px solid #e9ecef;
+	border-radius: 12px;
+	padding: 20px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	transition: transform 0.3s ease;
+}
+
+.bt-carousel-item:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.bt-carousel-item img {
+	width: 100%;
+	height: 150px;
+	object-fit: cover;
+	border-radius: 8px;
+	margin-bottom: 15px;
+}
+
+.bt-carousel-item h4 {
+	font-size: clamp(0.9rem, 2vw, 1rem);
+	margin: 0 0 10px;
+	color: #212529;
+	line-height: 1.3;
+}
+
+.bt-carousel-item .bt-price {
+	font-size: clamp(1rem, 2.5vw, 1.2rem);
+	font-weight: 700;
+	color: #28a745;
+	margin-bottom: 10px;
+}
+
+.bt-carousel-item .bt-store {
+	font-size: clamp(0.7rem, 2vw, 0.85rem);
+	color: #6c757d;
+	margin-bottom: 15px;
+}
+
+.bt-carousel-item .bt-btn {
+	background: #007cba;
+	color: white;
+	padding: 8px 16px;
+	border-radius: 6px;
+	text-decoration: none;
+	font-size: clamp(0.8rem, 2vw, 0.9rem);
+	font-weight: 600;
+	display: inline-block;
+	transition: background 0.3s ease;
+	width: 100%;
+	text-align: center;
+}
+
+.bt-carousel-item .bt-btn:hover {
+	background: #005a87;
+	color: white;
+	text-decoration: none;
+}
+
+/* Carousel Controls */
+.bt-carousel-controls {
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+	margin-top: 20px;
+}
+
+.bt-carousel-btn {
+	background: #007cba;
+	color: white;
+	border: none;
+	border-radius: 50%;
+	width: 50px;
+	height: 50px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.2rem;
+}
+
+.bt-carousel-btn:hover {
+	background: #005a87;
+	transform: scale(1.1);
+}
+
+.bt-carousel-btn:disabled {
+	background: #6c757d;
+	cursor: not-allowed;
+	transform: none;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 1240px) {
+	.bt-deal-hero,
+	.bt-content-wrapper,
+	.bt-similar-deals {
+		margin-left: 20px;
+		margin-right: 20px;
+	}
+}
+
+@media (max-width: 768px) {
+	.bt-deal-hero {
+		padding: 30px 20px;
+		margin: 10px;
+	}
+	
+	/* Mobile: Change to centered single column layout */
+	.bt-hero-content {
+		grid-template-columns: 1fr;
+		gap: 20px;
+		text-align: center;
+	}
+	
+	.bt-hero-left {
+		order: 1; /* Image first on mobile */
+		justify-content: center;
+	}
+	
+	.bt-hero-center {
+		order: 2; /* Title and description second */
+		text-align: center;
+	}
+	
+	.bt-hero-right {
+		order: 3; /* Store logo and button last */
+		justify-content: center;
+		align-items: center;
+	}
+	
+	.bt-product-image {
+		max-width: 250px;
+		margin: 0 auto;
+	}
+	
+	.bt-price-section {
+		justify-content: center;
+	}
+	
+	.bt-coupon-section {
+		justify-content: center;
+	}
+	
+	.bt-discount-badge {
+		position: static;
+		display: inline-block;
+		margin-bottom: 20px;
+		align-self: center;
+	}
+	
+	.bt-content-wrapper {
+		grid-template-columns: 1fr;
+		gap: 20px;
+		padding: 0 10px;
+	}
+	
+	.bt-content-main {
+		padding: 20px;
+	}
+	
+	.bt-similar-deals {
+		padding: 0 10px;
+	}
+	
+	.bt-carousel-item {
+		flex: 0 0 250px;
+	}
+}
+
+@media (max-width: 480px) {
+	.bt-deal-hero {
+		padding: 20px 15px;
+	}
+	
+	.bt-hero-content {
+		gap: 15px;
+	}
+	
+	.bt-product-image {
+		max-width: 200px;
+	}
+	
+	.bt-store-image {
+		width: 60px;
+		height: 60px;
+	}
+	
+	.bt-main-cta {
+		padding: 14px 28px;
+		min-width: 140px;
+	}
+	
+	.bt-content-main {
+		padding: 15px;
+	}
+	
+	.bt-deal-info-card,
+	.bt-share-card {
+		padding: 15px;
+	}
+	
+	.bt-carousel-item {
+		flex: 0 0 220px;
+		padding: 15px;
+	}
+	
+	.bt-share-buttons {
+		justify-content: center;
+	}
+	
+	.bt-category-chips {
+		justify-content: center;
+	}
+}
+
+/* Animation for reveals */
+.bt-fade-in {
+	animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(10px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+/* Notification styles */
+.bt-notification {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	background: #28a745;
+	color: white;
+	padding: 15px 20px;
+	border-radius: 8px;
+	font-weight: 600;
+	z-index: 9999;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+	animation: slideIn 0.3s ease;
+}
+
+.bt-notification.error {
+	background: #dc3545;
+}
+
+@keyframes slideIn {
+	from { transform: translateX(100%); opacity: 0; }
+	to { transform: translateX(0); opacity: 1; }
+}
+
+/* Print styles */
+@media print {
+	.bt-share-buttons,
+	.bt-carousel-controls,
+	.bt-similar-deals {
+		display: none;
+	}
+	
+	.bt-deal-hero {
+		box-shadow: none;
+		border: 1px solid #ccc;
+	}
+	
+	.bt-content-wrapper {
+		grid-template-columns: 1fr;
+	}
+}
