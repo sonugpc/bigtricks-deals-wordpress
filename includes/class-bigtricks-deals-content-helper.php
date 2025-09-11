@@ -66,6 +66,7 @@ class Bigtricks_Deals_Content_Helper {
 				</a>
 			</div>
 		</div>
+		</div>
 		<?php
 		return ob_get_clean();
 	}

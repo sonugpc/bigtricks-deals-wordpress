@@ -133,7 +133,7 @@ class Bigtricks_Deals_Public {
 		ob_start();
 
 		if ( $deals_query->have_posts() ) {
-			echo '<div class="bt-deals-archive-grid">';
+			echo '<div class="rb-row rb-n20-gutter">';
 			while ( $deals_query->have_posts() ) {
 				$deals_query->the_post();
 				echo Bigtricks_Deals_Content_Helper::render_deal_box( get_the_ID() );

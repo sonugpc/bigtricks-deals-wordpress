@@ -140,6 +140,7 @@ class Bigtricks_Deals {
 	$this->loader->add_action( 'save_post_deal', $plugin_admin, 'save_deal_meta_data' );
 	$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_rest_fields' );
 	$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_media_library' );
+	$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_import_menu' );
 
 	$this->loader->add_action( 'wp_ajax_load_more_content', $plugin_admin, 'load_more_content_callback' );
 	$this->loader->add_action( 'wp_ajax_nopriv_load_more_content', $plugin_admin, 'load_more_content_callback' );

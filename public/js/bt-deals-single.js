@@ -1,446 +1,678 @@
 /**
- * Professional Single Deal Page JavaScript
- * Optimized for performance and user experience
+ * BigTricks Deals Single Page JavaScript v3.0
+ * Enhanced UX with countdown timer, wishlist, and modern interactions
  */
 
 (function($) {
-    'use strict';
+	'use strict';
 
-    // Main object for deal functionality
-    window.btDeals = {
-        
-        // Initialize all functionality
-        init: function() {
-            this.setupSocialShare();
-            this.setupCouponReveal();
-            this.loadSimilarDeals();
-            this.setupCarousel();
-            this.trackPageView();
-            this.lazyLoadImages();
-        },
+	// Main Deals Object
+	window.btDeals = {
 
-        // Social sharing functionality
-        setupSocialShare: function() {
-            $('.bt-share-btn').on('click', function(e) {
-                e.preventDefault();
-                const shareType = $(this).data('share');
-                const url = btDealsAjax.shareUrl;
-                const title = btDealsAjax.shareTitle;
-                const text = btDealsAjax.shareText;
+		// Configuration
+		config: {
+			carouselItems: 5,
+			carouselItemWidth: 280,
+			carouselGap: 24,
+			autoPlay: false,
+			autoPlayInterval: 5000,
+			transitionDuration: 300
+		},
 
-                btDeals.handleShare(shareType, url, title, text);
-            });
-        },
+		// State
+		state: {
+			currentSlide: 0,
+			totalSlides: 0,
+			isLoading: false,
+			carouselData: [],
+			autoPlayTimer: null
+		},
 
-        // Handle different share types
-        handleShare: function(type, url, title, text) {
-            let shareUrl = '';
-            
-            switch(type) {
-                case 'facebook':
-                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-                    break;
-                case 'twitter':
-                    shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
-                    break;
-                case 'whatsapp':
-                    shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
-                    break;
-                case 'copy':
-                    this.copyToClipboard(url);
-                    return;
-            }
+		// Initialize
+		init: function() {
+			this.bindEvents();
+			this.loadSimilarDeals();
+			this.initShareButtons();
+			this.initCouponReveal();
+			this.initCountdownTimer();
+			this.initWishlist();
+			this.initShareTrigger();
+			this.addFadeInAnimations();
+		},
 
-            if (shareUrl) {
-                window.open(shareUrl, 'share-popup', 'width=600,height=400,scrollbars=no,resizable=no');
-            }
-        },
+		// Bind Events
+		bindEvents: function() {
+			const self = this;
 
-        // Copy URL to clipboard
-        copyToClipboard: function(text) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => {
-                    this.showNotification('Link copied to clipboard!', 'success');
-                }).catch(() => {
-                    this.fallbackCopyTextToClipboard(text);
-                });
-            } else {
-                this.fallbackCopyTextToClipboard(text);
-            }
-        },
+			// Carousel Navigation
+			$(document).on('click', '#btPrevBtn', function(e) {
+				e.preventDefault();
+				if (!$(this).prop('disabled')) {
+					self.prevSlide();
+				}
+			});
 
-        // Fallback copy method
-        fallbackCopyTextToClipboard: function(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.top = "0";
-            textArea.style.left = "0";
-            textArea.style.position = "fixed";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
+			$(document).on('click', '#btNextBtn', function(e) {
+				e.preventDefault();
+				if (!$(this).prop('disabled')) {
+					self.nextSlide();
+				}
+			});
 
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    this.showNotification('Link copied to clipboard!', 'success');
-                } else {
-                    this.showNotification('Failed to copy link', 'error');
-                }
-            } catch (err) {
-                this.showNotification('Failed to copy link', 'error');
-            }
+			// Carousel Dots
+			$(document).on('click', '.bt-dot', function() {
+				const slideIndex = $(this).index();
+				self.goToSlide(slideIndex);
+			});
 
-            document.body.removeChild(textArea);
-        },
+			// Keyboard Navigation
+			$(document).on('keydown', function(e) {
+				if (e.key === 'ArrowLeft') {
+					self.prevSlide();
+				} else if (e.key === 'ArrowRight') {
+					self.nextSlide();
+				}
+			});
 
-        // Coupon reveal functionality
-        setupCouponReveal: function() {
-            $('.bt-coupon-reveal').on('click', function(e) {
-                e.preventDefault();
-                const $btn = $(this);
-                const couponCode = $btn.data('coupon');
-                
-                if ($btn.hasClass('revealed')) return;
+			// Touch/Swipe Support
+			this.initTouchSupport();
 
-                $btn.find('.bt-coupon-text').hide();
-                $btn.find('.bt-loading').show();
+			// Window Resize
+			$(window).on('resize', this.debounce(function() {
+				self.updateCarouselLayout();
+			}, 250));
+		},
 
-                // Simulate API call delay for better UX
-                setTimeout(() => {
-                    $btn.find('.bt-loading').hide();
-                    $btn.find('.bt-coupon-text').text(couponCode).show();
-                    $btn.addClass('revealed');
-                    
-                    // Track coupon reveal
-                    btDeals.trackEvent('coupon_revealed', {
-                        deal_id: btDealsAjax.postId,
-                        coupon_code: couponCode
-                    });
-                }, 800);
-            });
-        },
+		// Load Similar Deals
+		loadSimilarDeals: function() {
+			const self = this;
+			const $container = $('#btSimilarCarousel');
+			const $loading = $('.bt-loading-similar');
 
-        // Load similar deals via AJAX
-        loadSimilarDeals: function() {
-            const $carousel = $('#similarDealsCarousel');
-            
-            if (!$carousel.length) return;
+			if (this.state.isLoading) return;
 
-            $.ajax({
-                url: btDealsAjax.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'bt_get_similar_deals',
-                    nonce: btDealsAjax.nonce,
-                    post_id: btDealsAjax.postId,
-                    store_id: btDealsAjax.storeId
-                },
-                success: function(response) {
-                    if (response.success && response.data) {
-                        $carousel.html(response.data);
-                        btDeals.initCarouselControls();
-                    } else {
-                        $carousel.html('<p>No similar deals found.</p>');
-                    }
-                },
-                error: function() {
-                    $carousel.html('<p>Failed to load similar deals.</p>');
-                }
-            });
-        },
+			this.state.isLoading = true;
+			$loading.show();
 
-        // Setup carousel functionality
-        setupCarousel: function() {
-            // Will be initialized after AJAX load
-        },
+			$.ajax({
+				url: btDealsData.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'get_similar_deals',
+					nonce: btDealsData.nonce,
+					deal_id: btDealsData.postId,
+					limit: this.config.carouselItems
+				},
+				success: function(response) {
+					if (response.success && response.data.length > 0) {
+						self.state.carouselData = response.data;
+						self.renderCarousel(response.data);
+						self.updateNavigation();
+					} else {
+						self.showError('No similar deals found');
+					}
+				},
+				error: function() {
+					self.showError('Failed to load similar deals');
+				},
+				complete: function() {
+					self.state.isLoading = false;
+					$loading.hide();
+				}
+			});
+		},
 
-        // Initialize carousel controls after AJAX load
-        initCarouselControls: function() {
-            const $container = $('.bt-carousel-container');
-            if (!$container.length) return;
+		// Render Carousel
+		renderCarousel: function(deals) {
+			const $container = $('#btSimilarCarousel');
+			const $carouselContainer = $('<div class="bt-carousel-container"></div>');
+			const $dotsContainer = $('#btCarouselDots');
 
-            // Add navigation buttons
-            const $carousel = $('.bt-deals-carousel');
-            $carousel.append(`
-                <button class="bt-carousel-prev" aria-label="Previous deals">‹</button>
-                <button class="bt-carousel-next" aria-label="Next deals">›</button>
-            `);
+			// Clear existing content
+			$container.empty();
+			$dotsContainer.empty();
 
-            let currentIndex = 0;
-            const $cards = $('.bt-deal-card');
-            const cardWidth = 300; // Card width + gap
-            const visibleCards = Math.floor($carousel.width() / cardWidth);
-            const maxIndex = Math.max(0, $cards.length - visibleCards);
+			// Create deal items
+			deals.forEach((deal, index) => {
+				const $item = this.createCarouselItem(deal, index);
+				$carouselContainer.append($item);
+			});
 
-            // Previous button
-            $('.bt-carousel-prev').on('click', function() {
-                currentIndex = Math.max(0, currentIndex - 1);
-                btDeals.updateCarouselPosition(currentIndex, cardWidth);
-            });
+			// Create dots
+			const totalDots = Math.ceil(deals.length / 3); // 3 items per slide
+			for (let i = 0; i < totalDots; i++) {
+				const $dot = $(`<div class="bt-dot ${i === 0 ? 'active' : ''}" data-slide="${i}"></div>`);
+				$dotsContainer.append($dot);
+			}
 
-            // Next button
-            $('.bt-carousel-next').on('click', function() {
-                currentIndex = Math.min(maxIndex, currentIndex + 1);
-                btDeals.updateCarouselPosition(currentIndex, cardWidth);
-            });
+			$container.append($carouselContainer);
+			this.state.totalSlides = totalDots;
+			this.updateCarouselLayout();
+		},
 
-            // Touch/swipe support
-            let startX = 0;
-            let isScrolling = false;
+		// Create Carousel Item
+		createCarouselItem: function(deal, index) {
+			const currency = btDealsData.currency || '₹';
+			const imageUrl = deal.thumbnail || 'https://via.placeholder.com/280x160?text=No+Image';
 
-            $container.on('touchstart', function(e) {
-                startX = e.originalEvent.touches[0].clientX;
-                isScrolling = false;
-            });
+			return $(`
+				<div class="bt-carousel-item bt-fade-in" style="animation-delay: ${index * 0.1}s">
+					<img src="${imageUrl}"
+						 alt="${deal.title}"
+						 class="bt-carousel-image"
+						 loading="lazy"
+						 width="280"
+						 height="160">
+					<h4 class="bt-carousel-title">${deal.title}</h4>
+					<div class="bt-carousel-price">${currency}${deal.sale_price}</div>
+					<div class="bt-carousel-store">${deal.store_name || 'Store'}</div>
+					<a href="${deal.offer_url}"
+					   class="bt-carousel-btn"
+					   target="_blank"
+					   rel="nofollow noopener"
+					   onclick="btDeals.trackClick(${deal.id})">
+						Get Deal
+					</a>
+				</div>
+			`);
+		},
 
-            $container.on('touchmove', function(e) {
-                if (!startX) return;
-                
-                const currentX = e.originalEvent.touches[0].clientX;
-                const diffX = startX - currentX;
-                
-                if (Math.abs(diffX) > 50 && !isScrolling) {
-                    isScrolling = true;
-                    if (diffX > 0 && currentIndex < maxIndex) {
-                        // Swipe left - next
-                        currentIndex++;
-                    } else if (diffX < 0 && currentIndex > 0) {
-                        // Swipe right - previous
-                        currentIndex--;
-                    }
-                    btDeals.updateCarouselPosition(currentIndex, cardWidth);
-                }
-            });
+		// Navigation Methods
+		prevSlide: function() {
+			if (this.state.currentSlide > 0) {
+				this.goToSlide(this.state.currentSlide - 1);
+			}
+		},
 
-            $container.on('touchend', function() {
-                startX = 0;
-                isScrolling = false;
-            });
-        },
+		nextSlide: function() {
+			if (this.state.currentSlide < this.state.totalSlides - 1) {
+				this.goToSlide(this.state.currentSlide + 1);
+			}
+		},
 
-        // Update carousel position
-        updateCarouselPosition: function(index, cardWidth) {
-            const $container = $('.bt-carousel-container');
-            const translateX = -index * cardWidth;
-            $container.css('transform', `translateX(${translateX}px)`);
+		goToSlide: function(slideIndex) {
+			this.state.currentSlide = slideIndex;
+			this.updateCarouselPosition();
+			this.updateNavigation();
+			this.updateDots();
+		},
 
-            // Update button states
-            $('.bt-carousel-prev').toggleClass('disabled', index === 0);
-            $('.bt-carousel-next').toggleClass('disabled', index >= Math.max(0, $('.bt-deal-card').length - Math.floor($('.bt-deals-carousel').width() / cardWidth)));
-        },
+		// Update Carousel Position
+		updateCarouselPosition: function() {
+			const $container = $('.bt-carousel-container');
+			const translateX = -this.state.currentSlide * (this.config.carouselItemWidth * 3 + this.config.carouselGap * 2);
+			$container.css('transform', `translateX(${translateX}px)`);
+		},
 
-        // Track deal click
-        trackClick: function(dealId) {
-            this.trackEvent('deal_click', {
-                deal_id: dealId,
-                timestamp: Date.now()
-            });
-        },
+		// Update Navigation Buttons
+		updateNavigation: function() {
+			const $prevBtn = $('#btPrevBtn');
+			const $nextBtn = $('#btNextBtn');
 
-        // Track page view
-        trackPageView: function() {
-            this.trackEvent('deal_view', {
-                deal_id: btDealsAjax.postId,
-                timestamp: Date.now()
-            });
-        },
+			$prevBtn.prop('disabled', this.state.currentSlide === 0);
+			$nextBtn.prop('disabled', this.state.currentSlide >= this.state.totalSlides - 1);
+		},
 
-        // Generic event tracking
-        trackEvent: function(eventName, data) {
-            // Send to WordPress via AJAX for logging
-            $.ajax({
-                url: btDealsAjax.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'bt_track_event',
-                    nonce: btDealsAjax.nonce,
-                    event: eventName,
-                    data: JSON.stringify(data)
-                }
-            });
+		// Update Dots
+		updateDots: function() {
+			$('.bt-dot').removeClass('active');
+			$(`.bt-dot[data-slide="${this.state.currentSlide}"]`).addClass('active');
+		},
 
-            // Send to Google Analytics if available
-            if (typeof gtag !== 'undefined') {
-                gtag('event', eventName, data);
-            }
+		// Update Carousel Layout
+		updateCarouselLayout: function() {
+			const containerWidth = $('.bt-similar-carousel').width();
+			const itemWidth = Math.min(280, (containerWidth - 48) / 3); // 3 items per slide with gaps
 
-            // Send to Facebook Pixel if available
-            if (typeof fbq !== 'undefined') {
-                fbq('track', 'ViewContent', data);
-            }
-        },
+			this.config.carouselItemWidth = itemWidth;
+			$('.bt-carousel-item').css('flex', `0 0 ${itemWidth}px`);
+			this.updateCarouselPosition();
+		},
 
-        // Show notification to user
-        showNotification: function(message, type = 'info') {
-            const $notification = $(`
-                <div class="bt-notification bt-notification-${type}">
-                    <span class="bt-notification-message">${message}</span>
-                    <button class="bt-notification-close">×</button>
-                </div>
-            `);
+		// Touch/Swipe Support
+		initTouchSupport: function() {
+			let startX = 0;
+			let currentX = 0;
+			let isDragging = false;
 
-            // Add to page
-            if (!$('.bt-notifications').length) {
-                $('body').append('<div class="bt-notifications"></div>');
-            }
-            $('.bt-notifications').append($notification);
+			$('.bt-carousel-container').on('touchstart', (e) => {
+				startX = e.touches[0].clientX;
+				isDragging = true;
+			});
 
-            // Auto remove after 3 seconds
-            setTimeout(() => {
-                $notification.addClass('bt-notification-fade');
-                setTimeout(() => {
-                    $notification.remove();
-                }, 300);
-            }, 3000);
+			$('.bt-carousel-container').on('touchmove', (e) => {
+				if (!isDragging) return;
+				currentX = e.touches[0].clientX;
+			});
 
-            // Manual close
-            $notification.find('.bt-notification-close').on('click', function() {
-                $notification.addClass('bt-notification-fade');
-                setTimeout(() => {
-                    $notification.remove();
-                }, 300);
-            });
-        },
+			$('.bt-carousel-container').on('touchend', (e) => {
+				if (!isDragging) return;
 
-        // Lazy load images for better performance
-        lazyLoadImages: function() {
-            if ('IntersectionObserver' in window) {
-                const imageObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            img.src = img.dataset.src;
-                            img.classList.remove('lazy');
-                            imageObserver.unobserve(img);
-                        }
-                    });
-                });
+				const diff = startX - currentX;
+				const threshold = 50;
 
-                document.querySelectorAll('img[data-src]').forEach(img => {
-                    imageObserver.observe(img);
-                });
-            }
-        },
+				if (Math.abs(diff) > threshold) {
+					if (diff > 0) {
+						this.nextSlide();
+					} else {
+						this.prevSlide();
+					}
+				}
 
-        // Preload critical resources
-        preloadResources: function() {
-            // Preload next probable page (similar deals)
-            const $similarLinks = $('.bt-deal-card a');
-            if ($similarLinks.length > 0) {
-                const link = document.createElement('link');
-                link.rel = 'prefetch';
-                link.href = $similarLinks.first().attr('href');
-                document.head.appendChild(link);
-            }
-        }
-    };
+				isDragging = false;
+			});
+		},
 
-    // Initialize when DOM is ready
-    $(document).ready(function() {
-        btDeals.init();
-        
-        // Preload resources after initial load
-        setTimeout(btDeals.preloadResources, 2000);
-    });
+		// Share Buttons
+		initShareButtons: function() {
+			const self = this;
 
-    // Add notification styles dynamically to avoid blocking CSS
-    const notificationCSS = `
-        <style>
-        .bt-notifications {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            pointer-events: none;
-        }
-        .bt-notification {
-            background: white;
-            border-radius: 8px;
-            padding: 15px 20px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            pointer-events: auto;
-            opacity: 1;
-            transform: translateX(0);
-            transition: all 0.3s ease;
-            max-width: 300px;
-        }
-        .bt-notification.bt-notification-fade {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-        .bt-notification-success {
-            border-left: 4px solid #28a745;
-        }
-        .bt-notification-error {
-            border-left: 4px solid #dc3545;
-        }
-        .bt-notification-info {
-            border-left: 4px solid #17a2b8;
-        }
-        .bt-notification-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #999;
-            padding: 0;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .bt-carousel-prev,
-        .bt-carousel-next {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.9);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-            cursor: pointer;
-            z-index: 10;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .bt-carousel-prev:hover,
-        .bt-carousel-next:hover {
-            background: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .bt-carousel-prev {
-            left: 10px;
-        }
-        .bt-carousel-next {
-            right: 10px;
-        }
-        .bt-carousel-prev.disabled,
-        .bt-carousel-next.disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-        @media (max-width: 768px) {
-            .bt-notifications {
-                right: 10px;
-                left: 10px;
-            }
-            .bt-notification {
-                max-width: none;
-            }
-        }
-        </style>
-    `;
-    
-    $('head').append(notificationCSS);
+			$(document).on('click', '.bt-share-btn', function(e) {
+				e.preventDefault();
+				const platform = $(this).data('platform');
+				const url = btDealsData.shareUrl;
+				const title = btDealsData.shareTitle;
+				const text = btDealsData.shareText;
+
+				self.shareOnPlatform(platform, url, title, text);
+			});
+		},
+
+		// Share on Platform
+		shareOnPlatform: function(platform, url, title, text) {
+			const encodedUrl = encodeURIComponent(url);
+			const encodedTitle = encodeURIComponent(title);
+			const encodedText = encodeURIComponent(text);
+
+			let shareUrl = '';
+
+			switch (platform) {
+				case 'facebook':
+					shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+					break;
+				case 'twitter':
+					shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+					break;
+				case 'whatsapp':
+					shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+					break;
+				case 'copy':
+					this.copyToClipboard(url);
+					this.showNotification('Link copied to clipboard!');
+					return;
+			}
+
+			if (shareUrl) {
+				window.open(shareUrl, '_blank', 'width=600,height=400');
+			}
+		},
+
+		// Copy to Clipboard
+		copyToClipboard: function(text) {
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(text);
+			} else {
+				// Fallback for older browsers
+				const textArea = document.createElement('textarea');
+				textArea.value = text;
+				document.body.appendChild(textArea);
+				textArea.select();
+				document.execCommand('copy');
+				document.body.removeChild(textArea);
+			}
+		},
+
+		// Coupon Reveal
+		initCouponReveal: function() {
+			$(document).on('click', '.bt-coupon-reveal', function(e) {
+				e.preventDefault();
+				const $button = $(this);
+				const $code = $button.siblings('.bt-coupon-code');
+				const couponCode = $button.data('coupon');
+
+				if ($code.length) {
+					$code.text(couponCode).show();
+					$button.hide();
+				}
+			});
+		},
+
+		// Track Click
+		trackClick: function(dealId) {
+			$.ajax({
+				url: btDealsData.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'track_event',
+					nonce: btDealsData.nonce,
+					event_type: 'click',
+					deal_id: dealId,
+					extra_data: 'deal_page'
+				}
+			});
+		},
+
+		// Add Fade In Animations
+		addFadeInAnimations: function() {
+			const observerOptions = {
+				threshold: 0.1,
+				rootMargin: '0px 0px -50px 0px'
+			};
+
+			const observer = new IntersectionObserver((entries) => {
+				entries.forEach(entry => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('bt-fade-in');
+					}
+				});
+			}, observerOptions);
+
+			// Observe elements
+			document.querySelectorAll('.bt-hero-container, .bt-content-section, .bt-similar-deals-section').forEach(el => {
+				observer.observe(el);
+			});
+		},
+
+		// Show Notification
+		showNotification: function(message, type = 'success') {
+			const $notification = $(`
+				<div class="bt-notification ${type === 'error' ? 'error' : ''}">
+					${message}
+				</div>
+			`);
+
+			$('body').append($notification);
+
+			setTimeout(() => {
+				$notification.fadeOut(() => {
+					$notification.remove();
+				});
+			}, 3000);
+		},
+
+		// Show Error
+		showError: function(message) {
+			const $container = $('#btSimilarCarousel');
+			$container.html(`
+				<div class="bt-loading-similar">
+					<p style="color: var(--bt-error);">${message}</p>
+				</div>
+			`);
+		},
+
+		// Utility: Debounce
+		debounce: function(func, wait) {
+			let timeout;
+			return function executedFunction(...args) {
+				const later = () => {
+					clearTimeout(timeout);
+					func(...args);
+				};
+				clearTimeout(timeout);
+				timeout = setTimeout(later, wait);
+			};
+		},
+
+		// Countdown Timer
+		initCountdownTimer: function() {
+			const $timer = $('.bt-countdown-timer');
+			if ($timer.length === 0) return;
+
+			const expiryDate = $timer.data('expiry');
+			if (!expiryDate) return;
+
+			this.updateCountdown(expiryDate);
+			this.countdownInterval = setInterval(() => {
+				this.updateCountdown(expiryDate);
+			}, 1000);
+		},
+
+		// Update Countdown Display
+		updateCountdown: function(expiryDate) {
+			const now = new Date().getTime();
+			const expiry = new Date(expiryDate).getTime();
+			const distance = expiry - now;
+
+			if (distance < 0) {
+				// Deal has expired
+				$('#btDays, #btHours, #btMinutes, #btSeconds').text('00');
+				if (this.countdownInterval) {
+					clearInterval(this.countdownInterval);
+				}
+				return;
+			}
+
+			const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+			const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+			const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+			const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+			$('#btDays').text(this.padNumber(days));
+			$('#btHours').text(this.padNumber(hours));
+			$('#btMinutes').text(this.padNumber(minutes));
+			$('#btSeconds').text(this.padNumber(seconds));
+		},
+
+		// Pad Number with Leading Zero
+		padNumber: function(num) {
+			return num.toString().padStart(2, '0');
+		},
+
+		// Wishlist Functionality
+		initWishlist: function() {
+			const self = this;
+
+			$(document).on('click', '.bt-wishlist-btn', function(e) {
+				e.preventDefault();
+				const $button = $(this);
+				const dealId = $button.data('deal-id');
+
+				if ($button.hasClass('bt-active')) {
+					self.removeFromWishlist(dealId, $button);
+				} else {
+					self.addToWishlist(dealId, $button);
+				}
+			});
+
+			// Check if deal is already in wishlist
+			this.checkWishlistStatus();
+		},
+
+		// Add to Wishlist
+		addToWishlist: function(dealId, $button) {
+			const self = this;
+
+			$.ajax({
+				url: btDealsData.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'add_to_wishlist',
+					nonce: btDealsData.nonce,
+					deal_id: dealId
+				},
+				success: function(response) {
+					if (response.success) {
+						$button.addClass('bt-active');
+						$button.find('.bt-wishlist-text').text('Saved');
+						self.showNotification('Added to wishlist!');
+					} else {
+						self.showNotification('Failed to add to wishlist', 'error');
+					}
+				},
+				error: function() {
+					self.showNotification('Failed to add to wishlist', 'error');
+				}
+			});
+		},
+
+		// Remove from Wishlist
+		removeFromWishlist: function(dealId, $button) {
+			const self = this;
+
+			$.ajax({
+				url: btDealsData.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'remove_from_wishlist',
+					nonce: btDealsData.nonce,
+					deal_id: dealId
+				},
+				success: function(response) {
+					if (response.success) {
+						$button.removeClass('bt-active');
+						$button.find('.bt-wishlist-text').text('Save Deal');
+						self.showNotification('Removed from wishlist!');
+					} else {
+						self.showNotification('Failed to remove from wishlist', 'error');
+					}
+				},
+				error: function() {
+					self.showNotification('Failed to remove from wishlist', 'error');
+				}
+			});
+		},
+
+		// Check Wishlist Status
+		checkWishlistStatus: function() {
+			const dealId = btDealsData.postId;
+			const self = this;
+
+			$.ajax({
+				url: btDealsData.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'check_wishlist_status',
+					nonce: btDealsData.nonce,
+					deal_id: dealId
+				},
+				success: function(response) {
+					if (response.success && response.in_wishlist) {
+						$('.bt-wishlist-btn').addClass('bt-active');
+						$('.bt-wishlist-text').text('Saved');
+					}
+				}
+			});
+		},
+
+		// Share Trigger
+		initShareTrigger: function() {
+			const self = this;
+
+			$(document).on('click', '.bt-share-trigger', function(e) {
+				e.preventDefault();
+
+				// Create share modal/popup
+				const shareUrl = btDealsData.shareUrl;
+				const shareTitle = btDealsData.shareTitle;
+				const shareText = btDealsData.shareText;
+
+				self.showShareModal(shareUrl, shareTitle, shareText);
+			});
+		},
+
+		// Show Share Modal
+		showShareModal: function(url, title, text) {
+			const modalHtml = `
+				<div class="bt-share-modal-overlay">
+					<div class="bt-share-modal">
+						<div class="bt-share-modal-header">
+							<h3>Share this Deal</h3>
+							<button class="bt-share-modal-close">&times;</button>
+						</div>
+						<div class="bt-share-modal-content">
+							<div class="bt-share-buttons-grid">
+								<button class="bt-share-btn-modal" data-platform="facebook">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+									</svg>
+									<span>Facebook</span>
+								</button>
+								<button class="bt-share-btn-modal" data-platform="twitter">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+									</svg>
+									<span>Twitter</span>
+								</button>
+								<button class="bt-share-btn-modal" data-platform="whatsapp">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.89 3.685"/>
+									</svg>
+									<span>WhatsApp</span>
+								</button>
+								<button class="bt-share-btn-modal" data-platform="telegram">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+									</svg>
+									<span>Telegram</span>
+								</button>
+								<button class="bt-share-btn-modal" data-platform="linkedin">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+									</svg>
+									<span>LinkedIn</span>
+								</button>
+								<button class="bt-share-btn-modal" data-platform="copy">
+									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+									</svg>
+									<span>Copy Link</span>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+
+			$('body').append(modalHtml);
+
+			// Bind modal events
+			$('.bt-share-modal-close, .bt-share-modal-overlay').on('click', function() {
+				$('.bt-share-modal-overlay').remove();
+			});
+
+			// Bind share buttons in modal
+			$('.bt-share-btn-modal').on('click', function() {
+				const platform = $(this).data('platform');
+				self.shareOnPlatform(platform, url, title, text);
+				$('.bt-share-modal-overlay').remove();
+			});
+		},
+
+		// Utility: Throttle
+		throttle: function(func, limit) {
+			let inThrottle;
+			return function() {
+				const args = arguments;
+				const context = this;
+				if (!inThrottle) {
+					func.apply(context, args);
+					inThrottle = true;
+					setTimeout(() => inThrottle = false, limit);
+				}
+			};
+		}
+	};
+
+	// Initialize on document ready
+	$(document).ready(function() {
+		btDeals.init();
+	});
+
+	// Performance: Preload images
+	function preloadImages() {
+		const images = document.querySelectorAll('img[loading="lazy"]');
+		images.forEach(img => {
+			const link = document.createElement('link');
+			link.rel = 'preload';
+			link.as = 'image';
+			link.href = img.src;
+			document.head.appendChild(link);
+		});
+	}
+
+	// Run preload after page load
+	$(window).on('load', function() {
+		setTimeout(preloadImages, 100);
+	});
 
 })(jQuery);
