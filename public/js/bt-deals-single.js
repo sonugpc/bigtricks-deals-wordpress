@@ -95,12 +95,12 @@
 			$loading.show();
 
 			$.ajax({
-				url: btDealsData.ajaxUrl,
+				url: btDealsAjax.ajaxurl,
 				type: 'POST',
 				data: {
-					action: 'get_similar_deals',
-					nonce: btDealsData.nonce,
-					deal_id: btDealsData.postId,
+					action: 'bt_get_similar_deals',
+					nonce: btDealsAjax.nonce,
+					deal_id: btDealsAjax.postId,
 					limit: this.config.carouselItems
 				},
 				success: function(response) {
@@ -152,7 +152,7 @@
 
 		// Create Carousel Item
 		createCarouselItem: function(deal, index) {
-			const currency = btDealsData.currency || '₹';
+			const currency = '₹';
 			const imageUrl = deal.thumbnail || 'https://via.placeholder.com/280x160?text=No+Image';
 
 			return $(`
@@ -270,9 +270,9 @@
 			$(document).on('click', '.bt-share-btn', function(e) {
 				e.preventDefault();
 				const platform = $(this).data('platform');
-				const url = btDealsData.shareUrl;
-				const title = btDealsData.shareTitle;
-				const text = btDealsData.shareText;
+				const url = btDealsAjax.shareUrl;
+				const title = btDealsAjax.shareTitle;
+				const text = btDealsAjax.shareText;
 
 				self.shareOnPlatform(platform, url, title, text);
 			});
@@ -340,11 +340,11 @@
 		// Track Click
 		trackClick: function(dealId) {
 			$.ajax({
-				url: btDealsData.ajaxUrl,
+				url: btDealsAjax.ajaxurl,
 				type: 'POST',
 				data: {
-					action: 'track_event',
-					nonce: btDealsData.nonce,
+					action: 'bt_track_event',
+					nonce: btDealsAjax.nonce,
 					event_type: 'click',
 					deal_id: dealId,
 					extra_data: 'deal_page'
@@ -483,11 +483,11 @@
 			const self = this;
 
 			$.ajax({
-				url: btDealsData.ajaxUrl,
+				url: btDealsAjax.ajaxurl,
 				type: 'POST',
 				data: {
-					action: 'add_to_wishlist',
-					nonce: btDealsData.nonce,
+					action: 'bt_add_to_wishlist',
+					nonce: btDealsAjax.nonce,
 					deal_id: dealId
 				},
 				success: function(response) {
@@ -510,11 +510,11 @@
 			const self = this;
 
 			$.ajax({
-				url: btDealsData.ajaxUrl,
+				url: btDealsAjax.ajaxurl,
 				type: 'POST',
 				data: {
-					action: 'remove_from_wishlist',
-					nonce: btDealsData.nonce,
+					action: 'bt_remove_from_wishlist',
+					nonce: btDealsAjax.nonce,
 					deal_id: dealId
 				},
 				success: function(response) {
@@ -534,15 +534,15 @@
 
 		// Check Wishlist Status
 		checkWishlistStatus: function() {
-			const dealId = btDealsData.postId;
+			const dealId = btDealsAjax.postId;
 			const self = this;
 
 			$.ajax({
-				url: btDealsData.ajaxUrl,
+				url: btDealsAjax.ajaxurl,
 				type: 'POST',
 				data: {
-					action: 'check_wishlist_status',
-					nonce: btDealsData.nonce,
+					action: 'bt_check_wishlist_status',
+					nonce: btDealsAjax.nonce,
 					deal_id: dealId
 				},
 				success: function(response) {
@@ -562,9 +562,9 @@
 				e.preventDefault();
 
 				// Create share modal/popup
-				const shareUrl = btDealsData.shareUrl;
-				const shareTitle = btDealsData.shareTitle;
-				const shareText = btDealsData.shareText;
+				const shareUrl = btDealsAjax.shareUrl;
+				const shareTitle = btDealsAjax.shareTitle;
+				const shareText = btDealsAjax.shareText;
 
 				self.showShareModal(shareUrl, shareTitle, shareText);
 			});

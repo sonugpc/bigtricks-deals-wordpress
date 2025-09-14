@@ -283,7 +283,7 @@ class Bigtricks_Deals_Admin {
 				<tr>
 					<th><label for="btdeals_store"><?php _e( 'Store', 'bigtricks-deals' ); ?></label></th>
 					<td><input type="text" id="btdeals_store" name="btdeals_store" value="<?php echo esc_attr( $fields['store'] ); ?>" class="widefat" readonly>
-					<p class="description"><?php _e( 'Automatically filled from selected store taxonomy', 'bigtricks-deals' ); ?></p></td>
+					<p class="description"><?php _e( 'This field shows the selected store taxonomy name and is automatically updated', 'bigtricks-deals' ); ?></p></td>
 				</tr>
 				<tr>
 					<th><label><?php _e( 'Brand Logo', 'bigtricks-deals' ); ?></label></th>
@@ -300,6 +300,11 @@ class Bigtricks_Deals_Admin {
 					<p class="description"><?php _e( 'Max 5 symbols. E.g., $20 or 50%', 'bigtricks-deals' ); ?></p></td>
 				</tr>
 				<tr>
+					<th><label for="btdeals_product_id"><?php _e( 'Product ID', 'bigtricks-deals' ); ?></label></th>
+					<td><input type="text" id="btdeals_product_id" name="btdeals_product_id" value="<?php echo esc_attr( $fields['product_id'] ?? '' ); ?>" class="regular-text">
+					<p class="description"><?php _e( 'Unique product identifier for API updates and tracking', 'bigtricks-deals' ); ?></p></td>
+				</tr>
+				<tr>
 					<th><label><?php _e( 'Shortcode', 'bigtricks-deals' ); ?></label></th>
 					<td><input type="text" readonly value="[quick_offer id="<?php echo $post->ID; ?>"]" class="widefat"></td>
 				</tr>
@@ -311,14 +316,18 @@ class Bigtricks_Deals_Admin {
 			// Function to update store field from taxonomy
 			function updateStoreField() {
 				var selectedStores = [];
-				$('#taxonomy-store input[type="checkbox"]:checked').each(function() {
+
+				// Check for checked checkboxes in store taxonomy
+				$('#store-all input[type="checkbox"]:checked, #store-pop input[type="checkbox"]:checked, #storechecklist input[type="checkbox"]:checked').each(function() {
 					var termName = $(this).closest('label').text().trim();
-					selectedStores.push(termName);
+					if (termName) {
+						selectedStores.push(termName);
+					}
 				});
 
 				// Also check for selected terms in the dropdown if present
-				$('#taxonomy-store select option:selected').each(function() {
-					if ($(this).val()) {
+				$('#store-tabs select option:selected').each(function() {
+					if ($(this).val() && $(this).val() !== '-1') {
 						selectedStores.push($(this).text().trim());
 					}
 				});
@@ -331,17 +340,45 @@ class Bigtricks_Deals_Admin {
 				}
 			}
 
-			// Listen for changes in store taxonomy
-			$(document).on('change', '#taxonomy-store input[type="checkbox"]', function() {
-				updateStoreField();
+			// Listen for changes in store taxonomy - multiple selectors for different WordPress versions
+			$(document).on('change', '#store-all input[type="checkbox"], #store-pop input[type="checkbox"], #storechecklist input[type="checkbox"]', function() {
+				setTimeout(updateStoreField, 100); // Small delay to ensure DOM updates
 			});
 
-			$(document).on('change', '#taxonomy-store select', function() {
-				updateStoreField();
+			$(document).on('change', '#store-tabs select', function() {
+				setTimeout(updateStoreField, 100);
 			});
 
-			// Initial update
-			updateStoreField();
+			// Also listen for clicks on taxonomy links
+			$(document).on('click', '#store-tabs a', function() {
+				setTimeout(updateStoreField, 200);
+			});
+
+			// Initial update on page load
+			setTimeout(updateStoreField, 500);
+
+			// Also populate from existing data if available
+			var existingStore = $('#btdeals_store').val();
+			if (!existingStore) {
+				// Try to get from post meta or taxonomy
+				var postId = $('#post_ID').val();
+				if (postId) {
+					$.ajax({
+						url: ajaxurl,
+						type: 'POST',
+						data: {
+							action: 'bt_get_post_store',
+							post_id: postId,
+							nonce: '<?php echo wp_create_nonce("bt_get_store_nonce"); ?>'
+						},
+						success: function(response) {
+							if (response.success && response.data.store_name) {
+								$('#btdeals_store').val(response.data.store_name);
+							}
+						}
+					});
+				}
+			}
 
 			// Product thumbnail upload
 			$('#btdeals_product_thumbnail_upload').on('click', function(e) {
@@ -419,9 +456,9 @@ class Bigtricks_Deals_Admin {
 		}
 
 		$fields = [
-			'product_name', 'offer_url', 'offer_old_price', 'offer_sale_price', 'coupon_code',
+			'product_name', 'short_description', 'offer_url', 'offer_old_price', 'offer_sale_price', 'coupon_code',
 			'expiration_date', 'verify_label', 'button_text', 'product_thumbnail_url', 'offer_thumbnail_url',
-			'store', 'brand_logo_url', 'discount_tag'
+			'store', 'brand_logo_url', 'discount_tag', 'product_id'
 		];
 
 		foreach ( $fields as $field ) {
@@ -561,10 +598,15 @@ class Bigtricks_Deals_Admin {
 			'posts_per_page' => $limit,
 			'post__not_in'   => array( $deal_id ),
 			'meta_query'     => array(
+				'relation' => 'OR',
 				array(
 					'key'     => '_btdeals_is_expired',
 					'value'   => 'off',
 					'compare' => '='
+				),
+				array(
+					'key'     => '_btdeals_is_expired',
+					'compare' => 'NOT EXISTS'
 				)
 			)
 		);
@@ -572,7 +614,7 @@ class Bigtricks_Deals_Admin {
 		// Prioritize deals from same store or category
 		if ( ! empty( $current_stores ) || ! empty( $current_categories ) ) {
 			$tax_query = array( 'relation' => 'OR' );
-			
+
 			if ( ! empty( $current_stores ) ) {
 				$tax_query[] = array(
 					'taxonomy' => 'store',
@@ -580,7 +622,7 @@ class Bigtricks_Deals_Admin {
 					'terms'    => $current_stores,
 				);
 			}
-			
+
 			if ( ! empty( $current_categories ) ) {
 				$tax_query[] = array(
 					'taxonomy' => 'category',
@@ -588,11 +630,17 @@ class Bigtricks_Deals_Admin {
 					'terms'    => $current_categories,
 				);
 			}
-			
+
 			$args['tax_query'] = $tax_query;
 		}
 
+		// If no deals found with matching taxonomy, get any recent deals
 		$query = new WP_Query( $args );
+		if ( ! $query->have_posts() && ( ! empty( $current_stores ) || ! empty( $current_categories ) ) ) {
+			// Remove tax query and get any recent deals
+			unset( $args['tax_query'] );
+			$query = new WP_Query( $args );
+		}
 		$deals = array();
 
 		if ( $query->have_posts() ) {
@@ -613,9 +661,13 @@ class Bigtricks_Deals_Admin {
 					'store_name'    => ''
 				);
 
-				// Get thumbnail
+				// Get thumbnail with priority: Offer > Product > Post thumbnail
+				$offer_thumbnail_url = get_post_meta( $post_id, '_btdeals_offer_thumbnail_url', true );
 				$product_thumbnail_url = get_post_meta( $post_id, '_btdeals_product_thumbnail_url', true );
-				if ( $product_thumbnail_url ) {
+
+				if ( ! empty( $offer_thumbnail_url ) ) {
+					$deal_data['thumbnail'] = $offer_thumbnail_url;
+				} elseif ( ! empty( $product_thumbnail_url ) ) {
 					$deal_data['thumbnail'] = $product_thumbnail_url;
 				} else {
 					$deal_data['thumbnail'] = get_the_post_thumbnail_url( $post_id, 'medium' );
@@ -633,6 +685,34 @@ class Bigtricks_Deals_Admin {
 		}
 
 		wp_send_json_success( $deals );
+	}
+
+	/**
+	 * AJAX callback to get post store information.
+	 *
+	 * @since 1.0.0
+	 */
+	public function get_post_store_callback() {
+		check_ajax_referer( 'bt_get_store_nonce', 'nonce' );
+
+		$post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+
+		if ( ! $post_id ) {
+			wp_send_json_error( 'Invalid post ID.' );
+		}
+
+		// Get store from meta field first
+		$store_name = get_post_meta( $post_id, '_btdeals_store', true );
+
+		// If not found in meta, get from taxonomy
+		if ( empty( $store_name ) ) {
+			$store_terms = wp_get_post_terms( $post_id, 'store', array( 'fields' => 'names' ) );
+			if ( ! empty( $store_terms ) ) {
+				$store_name = $store_terms[0];
+			}
+		}
+
+		wp_send_json_success( array( 'store_name' => $store_name ) );
 	}
 
 	/**
@@ -695,6 +775,93 @@ class Bigtricks_Deals_Admin {
 	}
 
 	/**
+	 * Add settings menu to admin.
+	 *
+	 * @since 1.0.0
+	 */
+	public function add_settings_menu() {
+		add_submenu_page(
+			'edit.php?post_type=deal',
+			__( 'Settings', 'bigtricks-deals' ),
+			__( 'Settings', 'bigtricks-deals' ),
+			'manage_options',
+			'bt-deals-settings',
+			array( $this, 'render_settings_page' )
+		);
+	}
+
+	/**
+	 * Render the settings page.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_settings_page() {
+		if ( isset( $_POST['bt_save_settings'] ) && wp_verify_nonce( $_POST['bt_settings_nonce'], 'bt_save_settings' ) ) {
+			$this->save_settings();
+		}
+
+		$global_disclaimer = get_option( 'btdeals_global_disclaimer', '' );
+		?>
+		<div class="wrap">
+			<h1><?php _e( 'BigTricks Deals Settings', 'bigtricks-deals' ); ?></h1>
+
+			<form method="post">
+				<?php wp_nonce_field( 'bt_save_settings', 'bt_settings_nonce' ); ?>
+
+				<table class="form-table">
+					<tbody>
+						<tr>
+							<th scope="row">
+								<label for="btdeals_global_disclaimer"><?php _e( 'Global Disclaimer', 'bigtricks-deals' ); ?></label>
+							</th>
+							<td>
+								<?php
+								wp_editor(
+									$global_disclaimer,
+									'btdeals_global_disclaimer',
+									array(
+										'textarea_name' => 'btdeals_global_disclaimer',
+										'media_buttons' => false,
+										'textarea_rows' => 8,
+										'tinymce' => array(
+											'toolbar1' => 'bold,italic,underline,link,unlink,bullist,numlist,blockquote',
+											'toolbar2' => '',
+										),
+									)
+								);
+								?>
+								<p class="description">
+									<?php _e( 'This disclaimer will be displayed on all deal pages. Individual deal disclaimers will override this global disclaimer if set.', 'bigtricks-deals' ); ?>
+								</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<?php submit_button( __( 'Save Settings', 'bigtricks-deals' ), 'primary', 'bt_save_settings' ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Save settings.
+	 *
+	 * @since 1.0.0
+	 */
+	private function save_settings() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['btdeals_global_disclaimer'] ) ) {
+			$global_disclaimer = wp_kses_post( $_POST['btdeals_global_disclaimer'] );
+			update_option( 'btdeals_global_disclaimer', $global_disclaimer );
+			echo '<div class="notice notice-success"><p>' . __( 'Settings saved successfully.', 'bigtricks-deals' ) . '</p></div>';
+		}
+	}
+
+	/**
 	 * Render the import page.
 	 *
 	 * @since 1.0.0
@@ -703,16 +870,27 @@ class Bigtricks_Deals_Admin {
 		if ( isset( $_POST['bt_import_deals'] ) && wp_verify_nonce( $_POST['bt_import_nonce'], 'bt_import_deals' ) ) {
 			$this->process_import();
 		}
+
+		// Handle CSV preview
+		$csv_headers = array();
+		$csv_preview = array();
+		$show_mapping = false;
+
+		if ( isset( $_POST['bt_preview_csv'] ) && wp_verify_nonce( $_POST['bt_preview_nonce'], 'bt_preview_csv' ) ) {
+			$csv_headers = $this->get_csv_headers();
+			$csv_preview = $this->get_csv_preview();
+			$show_mapping = true;
+		}
 		?>
 		<div class="wrap">
-			<h1><?php _e( 'Import Deals from Another Theme', 'bigtricks-deals' ); ?></h1>
+			<h1><?php _e( 'Import Deals from CSV', 'bigtricks-deals' ); ?></h1>
 
 			<div class="notice notice-info">
-				<p><?php _e( 'This tool helps you import deals exported from other themes (like ReHub). Paste your exported deal data below and click Import.', 'bigtricks-deals' ); ?></p>
+				<p><?php _e( 'Upload a CSV file to import deals. You can map CSV columns to deal fields for maximum flexibility.', 'bigtricks-deals' ); ?></p>
 			</div>
 
-			<form method="post" enctype="multipart/form-data">
-				<?php wp_nonce_field( 'bt_import_deals', 'bt_import_nonce' ); ?>
+			<form method="post" enctype="multipart/form-data" id="bt-import-form">
+				<?php wp_nonce_field( 'bt_preview_csv', 'bt_preview_nonce' ); ?>
 
 				<table class="form-table">
 					<tbody>
@@ -723,7 +901,7 @@ class Bigtricks_Deals_Admin {
 							<td>
 								<input type="file" name="import_file" id="import_file" accept=".csv" required>
 								<p class="description">
-									<?php _e( 'Upload your exported CSV file from the previous theme.', 'bigtricks-deals' ); ?>
+									<?php _e( 'Upload your CSV file containing deal data.', 'bigtricks-deals' ); ?>
 								</p>
 							</td>
 						</tr>
@@ -744,59 +922,329 @@ class Bigtricks_Deals_Admin {
 						</tr>
 						<tr>
 							<th scope="row">
-								<label for="create_stores"><?php _e( 'Create Store Terms', 'bigtricks-deals' ); ?></label>
+								<label for="skip_first_row"><?php _e( 'Skip First Row', 'bigtricks-deals' ); ?></label>
 							</th>
 							<td>
-								<input type="checkbox" name="create_stores" id="create_stores" value="1" checked>
-								<label for="create_stores"><?php _e( 'Automatically create store taxonomy terms if they don\'t exist', 'bigtricks-deals' ); ?></label>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row">
-								<label for="preserve_dates"><?php _e( 'Preserve Original Dates', 'bigtricks-deals' ); ?></label>
-							</th>
-							<td>
-								<input type="checkbox" name="preserve_dates" id="preserve_dates" value="1" checked>
-								<label for="preserve_dates"><?php _e( 'Keep the original publish and modified dates from the imported data', 'bigtricks-deals' ); ?></label>
+								<input type="checkbox" name="skip_first_row" id="skip_first_row" value="1" checked>
+								<label for="skip_first_row"><?php _e( 'Skip the first row (usually contains headers)', 'bigtricks-deals' ); ?></label>
 							</td>
 						</tr>
 					</tbody>
 				</table>
 
-				<?php submit_button( __( 'Import Deals', 'bigtricks-deals' ), 'primary', 'bt_import_deals' ); ?>
+				<?php submit_button( __( 'Preview CSV & Map Fields', 'bigtricks-deals' ), 'secondary', 'bt_preview_csv', false, array( 'id' => 'bt-preview-btn' ) ); ?>
 			</form>
 
+			<?php if ( $show_mapping && !empty( $csv_headers ) ): ?>
+			<div id="bt-mapping-section" style="margin-top: 30px;">
+				<h2><?php _e( 'Field Mapping', 'bigtricks-deals' ); ?></h2>
+				<p><?php _e( 'Map your CSV columns to the corresponding deal fields:', 'bigtricks-deals' ); ?></p>
+
+				<?php if ( !empty( $csv_preview ) ): ?>
+				<div class="bt-csv-preview" style="margin-bottom: 20px;">
+					<h3><?php _e( 'CSV Preview (First 3 rows)', 'bigtricks-deals' ); ?></h3>
+					<table class="widefat fixed" style="max-width: 100%;">
+						<thead>
+							<tr>
+								<?php foreach ( $csv_headers as $header ): ?>
+								<th><?php echo esc_html( $header ); ?></th>
+								<?php endforeach; ?>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( array_slice( $csv_preview, 0, 3 ) as $row ): ?>
+							<tr>
+								<?php foreach ( $row as $cell ): ?>
+								<td><?php echo esc_html( mb_strimwidth( $cell, 0, 50, '...' ) ); ?></td>
+								<?php endforeach; ?>
+							</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+				<?php endif; ?>
+
+				<form method="post" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'bt_import_deals', 'bt_import_nonce' ); ?>
+					<input type="hidden" name="csv_delimiter" value="<?php echo esc_attr( $_POST['csv_delimiter'] ?? ',' ); ?>">
+					<input type="hidden" name="skip_first_row" value="<?php echo esc_attr( $_POST['skip_first_row'] ?? '1' ); ?>">
+
+					<!-- Hidden file input to preserve the uploaded file -->
+					<input type="hidden" name="import_file_data" value="<?php echo esc_attr( base64_encode( file_get_contents( $_FILES['import_file']['tmp_name'] ) ) ); ?>">
+					<input type="hidden" name="import_file_name" value="<?php echo esc_attr( $_FILES['import_file']['name'] ); ?>">
+
+					<table class="form-table">
+						<tbody>
+							<?php
+							$deal_fields = array(
+								'' => __( '-- Skip this column --', 'bigtricks-deals' ),
+								'post_title' => __( 'Post Title', 'bigtricks-deals' ),
+								'post_content' => __( 'Post Content', 'bigtricks-deals' ),
+								'short_description' => __( 'Short Description', 'bigtricks-deals' ),
+								'product_name' => __( 'Product Name', 'bigtricks-deals' ),
+								'product_id' => __( 'Product ID', 'bigtricks-deals' ),
+								'offer_url' => __( 'Offer URL', 'bigtricks-deals' ),
+								'old_price' => __( 'Old Price', 'bigtricks-deals' ),
+								'sale_price' => __( 'Sale Price', 'bigtricks-deals' ),
+								'coupon_code' => __( 'Coupon Code', 'bigtricks-deals' ),
+								'mask_coupon' => __( 'Mask Coupon (yes/no)', 'bigtricks-deals' ),
+								'expiration_date' => __( 'Expiration Date', 'bigtricks-deals' ),
+								'is_expired' => __( 'Is Expired (yes/no)', 'bigtricks-deals' ),
+								'product_thumbnail' => __( 'Product Thumbnail URL', 'bigtricks-deals' ),
+								'offer_thumbnail' => __( 'Offer Thumbnail URL', 'bigtricks-deals' ),
+								'store' => __( 'Store Name', 'bigtricks-deals' ),
+								'product_features' => __( 'Product Features', 'bigtricks-deals' ),
+								'brand_logo' => __( 'Brand Logo URL', 'bigtricks-deals' ),
+								'discount_tag' => __( 'Discount Tag', 'bigtricks-deals' ),
+								'button_text' => __( 'Button Text', 'bigtricks-deals' ),
+								'verify_label' => __( 'Verify Label', 'bigtricks-deals' ),
+								'disclaimer' => __( 'Disclaimer', 'bigtricks-deals' ),
+								'post_date' => __( 'Publish Date', 'bigtricks-deals' ),
+								'post_modified' => __( 'Modified Date', 'bigtricks-deals' ),
+							);
+
+							foreach ( $csv_headers as $index => $header ):
+							?>
+							<tr>
+								<th scope="row">
+									<label><?php printf( __( 'Column %d: %s', 'bigtricks-deals' ), $index + 1, esc_html( $header ) ); ?></label>
+								</th>
+								<td>
+									<select name="field_mapping[<?php echo $index; ?>]" class="widefat">
+										<?php foreach ( $deal_fields as $field_key => $field_label ): ?>
+										<option value="<?php echo esc_attr( $field_key ); ?>" <?php selected( $this->get_default_mapping( $header ), $field_key ); ?>>
+											<?php echo esc_html( $field_label ); ?>
+										</option>
+										<?php endforeach; ?>
+									</select>
+								</td>
+							</tr>
+							<?php endforeach; ?>
+
+							<tr>
+								<th scope="row">
+									<label for="create_stores"><?php _e( 'Create Store Terms', 'bigtricks-deals' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" name="create_stores" id="create_stores" value="1" checked>
+									<label for="create_stores"><?php _e( 'Automatically create store taxonomy terms if they don\'t exist', 'bigtricks-deals' ); ?></label>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="preserve_dates"><?php _e( 'Preserve Original Dates', 'bigtricks-deals' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" name="preserve_dates" id="preserve_dates" value="1" checked>
+									<label for="preserve_dates"><?php _e( 'Keep the original publish and modified dates from the imported data', 'bigtricks-deals' ); ?></label>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">
+									<label for="update_existing"><?php _e( 'Update Existing Deals', 'bigtricks-deals' ); ?></label>
+								</th>
+								<td>
+									<input type="checkbox" name="update_existing" id="update_existing" value="1">
+									<label for="update_existing"><?php _e( 'Update existing deals if a matching title is found', 'bigtricks-deals' ); ?></label>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<?php submit_button( __( 'Import Deals', 'bigtricks-deals' ), 'primary', 'bt_import_deals' ); ?>
+				</form>
+			</div>
+			<?php endif; ?>
+
 			<div class="bt-import-info" style="margin-top: 30px;">
-				<h3><?php _e( 'Field Mapping', 'bigtricks-deals' ); ?></h3>
-				<p><?php _e( 'The following field mappings will be used for CSV imports:', 'bigtricks-deals' ); ?></p>
-				<table class="widefat fixed" style="max-width: 600px;">
-					<thead>
-						<tr>
-							<th><?php _e( 'CSV Header', 'bigtricks-deals' ); ?></th>
-							<th><?php _e( 'Target Field', 'bigtricks-deals' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr><td><code>Title</code></td><td><?php _e( 'Post Title', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>Content</code></td><td><?php _e( 'Post Content', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>btdeal_offer_name</code></td><td><?php _e( 'Product Name', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>rehub_offer_product_url</code></td><td><?php _e( 'Offer URL', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>rehub_offer_product_price_old</code></td><td><?php _e( 'Old Price', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>rehub_offer_product_price</code></td><td><?php _e( 'Sale Price', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>rehub_offer_product_thumb</code></td><td><?php _e( 'Product Thumbnail URL', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>thumbnail_url</code></td><td><?php _e( 'Offer Thumbnail URL', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>store</code></td><td><?php _e( 'Store Taxonomy', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>rehub_prod_feature</code></td><td><?php _e( 'Product Features', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>Date</code></td><td><?php _e( 'Publish Date', 'bigtricks-deals' ); ?></td></tr>
-						<tr><td><code>Post Modified Date</code></td><td><?php _e( 'Modified Date', 'bigtricks-deals' ); ?></td></tr>
-					</tbody>
-				</table>
-				<p class="description" style="margin-top: 10px;">
-					<?php _e( 'Note: The system automatically handles case-insensitive matching and removes quotes from headers.', 'bigtricks-deals' ); ?>
-				</p>
+				<h3><?php _e( 'Import Instructions', 'bigtricks-deals' ); ?></h3>
+				<ul>
+					<li><?php _e( 'Upload a CSV file with your deal data', 'bigtricks-deals' ); ?></li>
+					<li><?php _e( 'Preview the CSV to see the column headers', 'bigtricks-deals' ); ?></li>
+					<li><?php _e( 'Map each CSV column to the appropriate deal field', 'bigtricks-deals' ); ?></li>
+					<li><?php _e( 'Choose import options like creating stores and preserving dates', 'bigtricks-deals' ); ?></li>
+					<li><?php _e( 'Click Import to process the deals', 'bigtricks-deals' ); ?></li>
+				</ul>
+
+				<h4><?php _e( 'Supported Date Formats', 'bigtricks-deals' ); ?></h4>
+				<ul>
+					<li><code>Y-m-d H:i:s</code> (e.g., 2023-12-25 14:30:00)</li>
+					<li><code>m/d/Y</code> (e.g., 12/25/2023)</li>
+					<li><code>d-m-Y</code> (e.g., 25-12-2023)</li>
+				</ul>
 			</div>
 		</div>
+
+		<script>
+		jQuery(document).ready(function($) {
+			// Show preview button when file is selected
+			$('#import_file').on('change', function() {
+				if ($(this).val()) {
+					$('#bt-preview-btn').prop('disabled', false).addClass('button-primary');
+				} else {
+					$('#bt-preview-btn').prop('disabled', true).removeClass('button-primary');
+				}
+			});
+
+			// Initially disable preview button
+			$('#bt-preview-btn').prop('disabled', true);
+		});
+		</script>
 		<?php
+	}
+
+	/**
+	 * Get CSV headers from uploaded file.
+	 *
+	 * @since 1.0.0
+	 * @return array Array of CSV headers.
+	 */
+	private function get_csv_headers() {
+		if ( ! isset( $_FILES['import_file'] ) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK ) {
+			return array();
+		}
+
+		$csv_delimiter = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
+		$file_path = $_FILES['import_file']['tmp_name'];
+
+		if ( ! file_exists( $file_path ) ) {
+			return array();
+		}
+
+		$handle = fopen( $file_path, 'r' );
+		if ( ! $handle ) {
+			return array();
+		}
+
+		$headers = fgetcsv( $handle, 0, $csv_delimiter );
+		fclose( $handle );
+
+		if ( ! $headers ) {
+			return array();
+		}
+
+		// Clean headers
+		return array_map( function( $header ) {
+			return trim( $header, '"\'' );
+		}, $headers );
+	}
+
+	/**
+	 * Get CSV preview data.
+	 *
+	 * @since 1.0.0
+	 * @return array Array of CSV preview rows.
+	 */
+	private function get_csv_preview() {
+		if ( ! isset( $_FILES['import_file'] ) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK ) {
+			return array();
+		}
+
+		$csv_delimiter = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
+		$skip_first_row = isset( $_POST['skip_first_row'] ) ? (bool) $_POST['skip_first_row'] : true;
+		$file_path = $_FILES['import_file']['tmp_name'];
+
+		if ( ! file_exists( $file_path ) ) {
+			return array();
+		}
+
+		$handle = fopen( $file_path, 'r' );
+		if ( ! $handle ) {
+			return array();
+		}
+
+		$preview = array();
+		$row_count = 0;
+		$max_rows = 5; // Preview first 5 rows
+
+		if ( $skip_first_row ) {
+			fgetcsv( $handle, 0, $csv_delimiter ); // Skip header row
+		}
+
+		while ( ( $row = fgetcsv( $handle, 0, $csv_delimiter ) ) !== false && $row_count < $max_rows ) {
+			$preview[] = $row;
+			$row_count++;
+		}
+
+		fclose( $handle );
+		return $preview;
+	}
+
+	/**
+	 * Get default field mapping based on header name.
+	 *
+	 * @since 1.0.0
+	 * @param string $header The CSV header name.
+	 * @return string The default field mapping.
+	 */
+	private function get_default_mapping( $header ) {
+		$header = strtolower( trim( $header ) );
+
+		$mappings = array(
+			'title' => 'post_title',
+			'post_title' => 'post_title',
+			'name' => 'post_title',
+			'product_name' => 'product_name',
+			'product name' => 'product_name',
+			'offer_name' => 'product_name',
+			'offer name' => 'product_name',
+			'content' => 'post_content',
+			'description' => 'post_content',
+			'url' => 'offer_url',
+			'offer_url' => 'offer_url',
+			'offer url' => 'offer_url',
+			'link' => 'offer_url',
+			'price' => 'sale_price',
+			'sale_price' => 'sale_price',
+			'sale price' => 'sale_price',
+			'new_price' => 'sale_price',
+			'new price' => 'sale_price',
+			'old_price' => 'old_price',
+			'old price' => 'old_price',
+			'original_price' => 'old_price',
+			'original price' => 'old_price',
+			'regular_price' => 'old_price',
+			'regular price' => 'old_price',
+			'coupon' => 'coupon_code',
+			'coupon_code' => 'coupon_code',
+			'coupon code' => 'coupon_code',
+			'voucher' => 'coupon_code',
+			'expiry' => 'expiration_date',
+			'expiry_date' => 'expiration_date',
+			'expiry date' => 'expiration_date',
+			'expiration' => 'expiration_date',
+			'expiration_date' => 'expiration_date',
+			'expiration date' => 'expiration_date',
+			'thumbnail' => 'offer_thumbnail',
+			'thumbnail_url' => 'offer_thumbnail',
+			'thumbnail url' => 'offer_thumbnail',
+			'image' => 'offer_thumbnail',
+			'image_url' => 'offer_thumbnail',
+			'image url' => 'offer_thumbnail',
+			'store' => 'store',
+			'store_name' => 'store',
+			'store name' => 'store',
+			'merchant' => 'store',
+			'brand' => 'store',
+			'features' => 'product_features',
+			'product_features' => 'product_features',
+			'product features' => 'product_features',
+			'specifications' => 'product_features',
+			'discount' => 'discount_tag',
+			'discount_tag' => 'discount_tag',
+			'discount tag' => 'discount_tag',
+			'savings' => 'discount_tag',
+			'button' => 'button_text',
+			'button_text' => 'button_text',
+			'button text' => 'button_text',
+			'cta' => 'button_text',
+			'date' => 'post_date',
+			'publish_date' => 'post_date',
+			'publish date' => 'post_date',
+			'created' => 'post_date',
+		);
+
+		return isset( $mappings[$header] ) ? $mappings[$header] : '';
 	}
 
 	/**
@@ -812,24 +1260,27 @@ class Bigtricks_Deals_Admin {
 		$csv_delimiter = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
 		$create_stores = isset( $_POST['create_stores'] ) ? (bool) $_POST['create_stores'] : true;
 		$preserve_dates = isset( $_POST['preserve_dates'] ) ? (bool) $_POST['preserve_dates'] : true;
+		$update_existing = isset( $_POST['update_existing'] ) ? (bool) $_POST['update_existing'] : false;
+		$field_mapping = isset( $_POST['field_mapping'] ) ? $_POST['field_mapping'] : array();
 
-		// Handle file upload
-		if ( ! isset( $_FILES['import_file'] ) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK ) {
-			echo '<div class="notice notice-error"><p>' . __( 'Please upload a valid CSV file.', 'bigtricks-deals' ) . '</p></div>';
+		// Handle file data from hidden input (for mapping workflow)
+		if ( isset( $_POST['import_file_data'] ) && isset( $_POST['import_file_name'] ) ) {
+			$file_content = base64_decode( $_POST['import_file_data'] );
+			$file_name = sanitize_file_name( $_POST['import_file_name'] );
+
+			// Create temporary file
+			$temp_file = wp_tempnam( $file_name );
+			file_put_contents( $temp_file, $file_content );
+			$file_path = $temp_file;
+		} elseif ( isset( $_FILES['import_file'] ) && $_FILES['import_file']['error'] === UPLOAD_ERR_OK ) {
+			$file_path = $_FILES['import_file']['tmp_name'];
+		} else {
+			echo '<div class="notice notice-error"><p>' . __( 'No valid CSV file found.', 'bigtricks-deals' ) . '</p></div>';
 			return;
 		}
 
-		$file = $_FILES['import_file'];
-
-		// Check file type
-		$allowed_types = array( 'text/csv', 'application/csv', 'text/plain' );
-		if ( ! in_array( $file['type'], $allowed_types ) && ! preg_match( '/\.csv$/i', $file['name'] ) ) {
-			echo '<div class="notice notice-error"><p>' . __( 'Please upload a valid CSV file.', 'bigtricks-deals' ) . '</p></div>';
-			return;
-		}
-
-		// Parse the CSV data
-		$deals = $this->parse_csv_data( $file['tmp_name'], $csv_delimiter );
+		// Parse the CSV data with custom mapping
+		$deals = $this->parse_csv_data_with_mapping( $file_path, $csv_delimiter, $field_mapping );
 
 		if ( empty( $deals ) ) {
 			echo '<div class="notice notice-error"><p>' . __( 'No valid deals found in the CSV file.', 'bigtricks-deals' ) . '</p></div>';
@@ -837,23 +1288,35 @@ class Bigtricks_Deals_Admin {
 		}
 
 		$imported = 0;
+		$updated = 0;
 		$skipped = 0;
 		$errors = array();
 
 		foreach ( $deals as $deal_data ) {
-			$result = $this->import_single_deal( $deal_data, $create_stores, $preserve_dates );
-			if ( $result === true ) {
+			$result = $this->import_single_deal_with_mapping( $deal_data, $create_stores, $preserve_dates, $update_existing );
+			if ( $result === 'imported' ) {
 				$imported++;
-			} elseif ( $result === false ) {
+			} elseif ( $result === 'updated' ) {
+				$updated++;
+			} elseif ( $result === 'skipped' ) {
 				$skipped++;
 			} else {
 				$errors[] = $result;
 			}
 		}
 
+		// Clean up temp file if created
+		if ( isset( $temp_file ) && file_exists( $temp_file ) ) {
+			unlink( $temp_file );
+		}
+
 		// Display results
 		if ( $imported > 0 ) {
 			echo '<div class="notice notice-success"><p>' . sprintf( __( 'Successfully imported %d deals.', 'bigtricks-deals' ), $imported ) . '</p></div>';
+		}
+
+		if ( $updated > 0 ) {
+			echo '<div class="notice notice-info"><p>' . sprintf( __( 'Successfully updated %d existing deals.', 'bigtricks-deals' ), $updated ) . '</p></div>';
 		}
 
 		if ( $skipped > 0 ) {
@@ -966,6 +1429,211 @@ class Bigtricks_Deals_Admin {
 
 		fclose( $handle );
 		return $deals;
+	}
+
+	/**
+	 * Parse CSV data with custom field mapping.
+	 *
+	 * @since 1.0.0
+	 * @param string $file_path The path to the CSV file.
+	 * @param string $delimiter The CSV delimiter.
+	 * @param array $field_mapping The field mapping array.
+	 * @return array Array of deal data.
+	 */
+	private function parse_csv_data_with_mapping( $file_path, $delimiter, $field_mapping ) {
+		$deals = array();
+
+		if ( ! file_exists( $file_path ) ) {
+			return $deals;
+		}
+
+		$handle = fopen( $file_path, 'r' );
+		if ( ! $handle ) {
+			return $deals;
+		}
+
+		// Skip header row if needed
+		$skip_first_row = isset( $_POST['skip_first_row'] ) ? (bool) $_POST['skip_first_row'] : true;
+		if ( $skip_first_row ) {
+			fgetcsv( $handle, 0, $delimiter );
+		}
+
+		// Read data rows
+		while ( ( $row = fgetcsv( $handle, 0, $delimiter ) ) !== false ) {
+			$deal = array();
+
+			// Map columns to fields based on user mapping
+			foreach ( $field_mapping as $column_index => $field_name ) {
+				if ( ! empty( $field_name ) && isset( $row[$column_index] ) ) {
+					$value = trim( $row[$column_index] );
+
+					// Handle special date parsing
+					if ( in_array( $field_name, array( 'post_date', 'post_modified', 'expiration_date' ) ) && ! empty( $value ) ) {
+						$value = $this->parse_date( $value );
+					}
+
+					$deal[$field_name] = $value;
+				}
+			}
+
+			// Only add if we have a title
+			if ( ! empty( $deal['post_title'] ) ) {
+				$deals[] = $deal;
+			}
+		}
+
+		fclose( $handle );
+		return $deals;
+	}
+
+	/**
+	 * Parse various date formats.
+	 *
+	 * @since 1.0.0
+	 * @param string $date_string The date string to parse.
+	 * @return string Formatted date string.
+	 */
+	private function parse_date( $date_string ) {
+		// Try different date formats
+		$formats = array(
+			'Y-m-d H:i:s',
+			'Y-m-d',
+			'm/d/Y',
+			'd-m-Y',
+			'd/m/Y',
+			'Y/m/d',
+		);
+
+		foreach ( $formats as $format ) {
+			$timestamp = strtotime( $date_string );
+			if ( $timestamp !== false ) {
+				if ( strpos( $format, 'H:i:s' ) !== false ) {
+					return date( 'Y-m-d H:i:s', $timestamp );
+				} else {
+					return date( 'Y-m-d', $timestamp );
+				}
+			}
+		}
+
+		// Return original if parsing fails
+		return $date_string;
+	}
+
+	/**
+	 * Import a single deal with custom mapping.
+	 *
+	 * @since 1.0.0
+	 * @param array $deal_data The deal data to import.
+	 * @param bool $create_stores Whether to create store terms.
+	 * @param bool $preserve_dates Whether to preserve original dates.
+	 * @param bool $update_existing Whether to update existing deals.
+	 * @return string Result status: 'imported', 'updated', 'skipped', or error message.
+	 */
+	private function import_single_deal_with_mapping( $deal_data, $create_stores, $preserve_dates, $update_existing ) {
+		// Check if deal already exists
+		$existing_deal = null;
+		if ( $update_existing && ! empty( $deal_data['post_title'] ) ) {
+			$existing_deal = get_page_by_title( $deal_data['post_title'], OBJECT, 'deal' );
+		}
+
+		// Prepare post data
+		$post_data = array(
+			'post_title'   => $deal_data['post_title'] ?? '',
+			'post_content' => $deal_data['post_content'] ?? '',
+			'post_status'  => 'publish',
+			'post_type'    => 'deal',
+		);
+
+		// Set dates if preserving and available
+		if ( $preserve_dates ) {
+			if ( ! empty( $deal_data['post_date'] ) ) {
+				$post_data['post_date'] = $deal_data['post_date'];
+			}
+			if ( ! empty( $deal_data['post_modified'] ) ) {
+				$post_data['post_modified'] = $deal_data['post_modified'];
+				$post_data['post_modified_gmt'] = get_gmt_from_date( $deal_data['post_modified'] );
+			}
+		}
+
+		// Handle existing deal
+		if ( $existing_deal ) {
+			$post_data['ID'] = $existing_deal->ID;
+			$post_id = wp_update_post( $post_data );
+		} else {
+			$post_id = wp_insert_post( $post_data );
+		}
+
+		if ( is_wp_error( $post_id ) ) {
+			return $post_id->get_error_message();
+		}
+
+		// Set meta fields based on mapping
+		$meta_field_mappings = array(
+			'short_description' => '_btdeals_short_description',
+			'product_name' => '_btdeals_product_name',
+			'product_id' => '_btdeals_product_id',
+			'offer_url' => '_btdeals_offer_url',
+			'old_price' => '_btdeals_offer_old_price',
+			'sale_price' => '_btdeals_offer_sale_price',
+			'coupon_code' => '_btdeals_coupon_code',
+			'mask_coupon' => '_btdeals_mask_coupon',
+			'expiration_date' => '_btdeals_expiration_date',
+			'is_expired' => '_btdeals_is_expired',
+			'product_thumbnail' => '_btdeals_product_thumbnail_url',
+			'offer_thumbnail' => '_btdeals_offer_thumbnail_url',
+			'product_features' => '_btdeals_product_feature',
+			'brand_logo' => '_btdeals_brand_logo_url',
+			'discount_tag' => '_btdeals_discount_tag',
+			'button_text' => '_btdeals_button_text',
+			'verify_label' => '_btdeals_verify_label',
+			'disclaimer' => '_btdeals_disclaimer',
+		);
+
+		foreach ( $meta_field_mappings as $source_field => $meta_key ) {
+			if ( isset( $deal_data[$source_field] ) && $deal_data[$source_field] !== '' ) {
+				if ( in_array( $meta_key, array( '_btdeals_offer_url', '_btdeals_product_thumbnail_url', '_btdeals_offer_thumbnail_url', '_btdeals_brand_logo_url' ) ) ) {
+					update_post_meta( $post_id, $meta_key, esc_url_raw( $deal_data[$source_field] ) );
+				} elseif ( in_array( $meta_key, array( '_btdeals_mask_coupon', '_btdeals_is_expired' ) ) ) {
+					// Handle boolean fields
+					$value = strtolower( trim( $deal_data[$source_field] ) );
+					$boolean_value = in_array( $value, array( 'yes', 'true', '1', 'on', 'y' ) ) ? 'on' : 'off';
+					update_post_meta( $post_id, $meta_key, $boolean_value );
+				} else {
+					update_post_meta( $post_id, $meta_key, sanitize_text_field( $deal_data[$source_field] ) );
+				}
+			}
+		}
+
+		// Handle store taxonomy
+		if ( isset( $deal_data['store'] ) && ! empty( $deal_data['store'] ) ) {
+			$store_name = sanitize_text_field( $deal_data['store'] );
+
+			// Check if store term exists
+			$store_term = get_term_by( 'name', $store_name, 'store' );
+
+			if ( ! $store_term && $create_stores ) {
+				// Create the store term
+				$store_term = wp_insert_term( $store_name, 'store' );
+				if ( ! is_wp_error( $store_term ) ) {
+					$store_term_id = $store_term['term_id'];
+				}
+			} elseif ( $store_term ) {
+				$store_term_id = $store_term->term_id;
+			}
+
+			if ( isset( $store_term_id ) ) {
+				wp_set_post_terms( $post_id, array( $store_term_id ), 'store' );
+				// Also save to meta field for the store name
+				update_post_meta( $post_id, '_btdeals_store', $store_name );
+			}
+		}
+
+		// Set default values for required fields
+		if ( ! get_post_meta( $post_id, '_btdeals_button_text', true ) ) {
+			update_post_meta( $post_id, '_btdeals_button_text', 'Get Deal' );
+		}
+
+		return $existing_deal ? 'updated' : 'imported';
 	}
 
 	/**

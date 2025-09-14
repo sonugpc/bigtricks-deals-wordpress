@@ -141,11 +141,14 @@ class Bigtricks_Deals {
 	$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_rest_fields' );
 	$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_media_library' );
 	$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_import_menu' );
+	$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_settings_menu' );
 
 	$this->loader->add_action( 'wp_ajax_load_more_content', $plugin_admin, 'load_more_content_callback' );
 	$this->loader->add_action( 'wp_ajax_nopriv_load_more_content', $plugin_admin, 'load_more_content_callback' );
 	$this->loader->add_action( 'wp_ajax_bt_get_similar_deals', $plugin_admin, 'get_similar_deals_callback' );
 	$this->loader->add_action( 'wp_ajax_nopriv_bt_get_similar_deals', $plugin_admin, 'get_similar_deals_callback' );
+	$this->loader->add_action( 'wp_ajax_bt_get_post_store', $plugin_admin, 'get_post_store_callback' );
+	$this->loader->add_action( 'wp_ajax_nopriv_bt_get_post_store', $plugin_admin, 'get_post_store_callback' );
 	$this->loader->add_action( 'wp_ajax_bt_track_event', $plugin_admin, 'track_event_callback' );
 	$this->loader->add_action( 'wp_ajax_nopriv_bt_track_event', $plugin_admin, 'track_event_callback' );
 	}
