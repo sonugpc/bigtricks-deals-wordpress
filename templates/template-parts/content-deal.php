@@ -9,26 +9,24 @@
 
 ?>
 
-<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
-	<header class="entry-header">
-		<?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
-	</header><!-- .entry-header -->
+<header class="entry-header">
+    <?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
+</header><!-- .entry-header -->
 
-	<div class="entry-content">
-		<?php
-			the_content();
+<div class="entry-content">
+    <?php
+    the_content();
 
-			echo do_shortcode( '[quick_offer id="' . get_the_ID() . '"]' );
-		?>
-	</div><!-- .entry-content -->
+    echo do_shortcode( '[quick_offer id="' . get_the_ID() . '"]' );
+    ?>
+</div><!-- .entry-content -->
 
-	<footer class="entry-footer">
-		<?php
-			// Display store taxonomy terms
-			$stores = get_the_term_list( get_the_ID(), 'store', '<strong>Stores:</strong> ', ', ', '' );
-			if ( ! is_wp_error( $stores ) && ! empty( $stores ) ) {
-				echo '<span class="stores-links">' . $stores . '</span>';
-			}
-		?>
-	</footer><!-- .entry-footer -->
-</article><!-- #post-<?php the_ID(); ?> -->
+<footer class="entry-footer">
+    <?php
+    // Display store taxonomy terms
+    $stores = get_the_term_list( get_the_ID(), 'store', '<strong>Stores:</strong> ', ', ', '' );
+    if ( ! is_wp_error( $stores ) && ! empty( $stores ) ) {
+        echo '<span class="stores-links">' . $stores . '</span>';
+    }
+    ?>
+</footer><!-- .entry-footer -->

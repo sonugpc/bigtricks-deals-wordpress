@@ -204,7 +204,8 @@ class Bigtricks_Deals_Public {
 			'postId'     => $post_id,
 			'storeId'    => $store_id,
 			'shareUrl'   => get_permalink(),
-			'shareTitle' => $product_name . ' - ' . $discount_percent . '% Off',
+			'shareTitle' => $product_name,
+			'sharePrice' => '₹' . number_format( $sale_price, 2 ),
 			'shareText'  => wp_strip_all_tags( $description ),
 		]);
 	}

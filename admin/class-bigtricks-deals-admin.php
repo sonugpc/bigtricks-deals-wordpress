@@ -493,6 +493,9 @@ class Bigtricks_Deals_Admin {
 				update_post_meta( $post_id, '_btdeals_' . $checkbox, 'off' );
 			}
 		}
+
+		// Clear the deal data cache
+		delete_transient( 'btdeal_data_' . $post_id );
 	}
 
 	/**
@@ -636,7 +639,7 @@ class Bigtricks_Deals_Admin {
 
 		// If no deals found with matching taxonomy, get any recent deals
 		$query = new WP_Query( $args );
-		if ( ! $query->have_posts() && ( ! empty( $current_stores ) || ! empty( $current_categories ) ) ) {
+		if ( ! $query->have_posts() ) {
 			// Remove tax query and get any recent deals
 			unset( $args['tax_query'] );
 			$query = new WP_Query( $args );

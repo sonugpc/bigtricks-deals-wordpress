@@ -1,105 +1,123 @@
 <?php
 /**
- * Helper class for rendering content.
+ * Class Bigtricks_Deals_Content_Helper
  *
- * @link       https://bigtricks.in
- * @since      1.0.0
+ * A helper class for retrieving and preparing deal data for display.
  *
- * @package    Bigtricks_Deals
- * @subpackage Bigtricks_Deals/includes
+ * @package Bigtricks_Deals
  */
 class Bigtricks_Deals_Content_Helper {
 
-	/**
-	 * Render a single deal box.
-	 *
-	 * @since 1.0.0
-	 * @param int $post_id The ID of the deal post.
-	 * @return string The HTML content of a single deal box.
-	 */
-	public static function render_deal_box( $post_id ) {
-		$fields = [
-			'product_name'      => get_post_meta( $post_id, '_btdeals_product_name', true ),
-			'offer_url'         => get_post_meta( $post_id, '_btdeals_offer_url', true ),
-			'offer_old_price'   => get_post_meta( $post_id, '_btdeals_offer_old_price', true ),
-			'offer_sale_price'  => get_post_meta( $post_id, '_btdeals_offer_sale_price', true ),
-			'coupon_code'       => get_post_meta( $post_id, '_btdeals_coupon_code', true ),
-			'button_text'       => get_post_meta( $post_id, '_btdeals_button_text', true ),
-			'thumbnail_id'      => get_post_meta( $post_id, '_btdeals_thumbnail_id', true ),
-			'discount_tag'      => get_post_meta( $post_id, '_btdeals_discount_tag', true ),
-		];
+    /**
+     * Get all data for a single deal, with caching.
+     *
+     * @param int $post_id The ID of the deal post.
+     * @return array An associative array of deal data.
+     */
+    public static function get_deal_data( $post_id ) {
+        $cache_key = 'btdeal_data_' . $post_id;
+        $cached_data = get_transient( $cache_key );
 
-		$title = ! empty( $fields['product_name'] ) ? $fields['product_name'] : get_the_title( $post_id );
-		$permalink = get_permalink( $post_id );
-		
-		$thumbnail = '';
-		if ( $fields['thumbnail_id'] ) {
-			$thumbnail = wp_get_attachment_image( $fields['thumbnail_id'], 'medium' );
-		} elseif ( has_post_thumbnail( $post_id ) ) {
-			$thumbnail = get_the_post_thumbnail( $post_id, 'medium' );
-		}
+        if ( false !== $cached_data ) {
+            return $cached_data;
+        }
 
-		ob_start();
-		?>
-		<div class="bt-deal-box">
-			<a href="<?php echo esc_url( $permalink ); ?>" class="bt-deal-box-link">
-				<?php if ( $thumbnail ) : ?>
-					<div class="bt-deal-box-thumb">
-						<?php echo $thumbnail; ?>
-					</div>
-				<?php endif; ?>
-				<div class="bt-deal-box-content">
-					<h4 class="bt-deal-box-title"><?php echo esc_html( $title ); ?></h4>
-					<div class="bt-deal-box-price">
-						<?php if ( ! empty( $fields['offer_sale_price'] ) ) : ?>
-							<span class="bt-sale-price">₹<?php echo esc_html( $fields['offer_sale_price'] ); ?></span>
-						<?php endif; ?>
-						<?php if ( ! empty( $fields['offer_old_price'] ) ) : ?>
-							<span class="bt-old-price"><del>₹<?php echo esc_html( $fields['offer_old_price'] ); ?></del></span>
-						<?php endif; ?>
-					</div>
-				</div>
-			</a>
-			<div class="bt-deal-box-action">
-				<a href="<?php echo esc_url( $fields['offer_url'] ); ?>" class="bt-deal-button" target="_blank" rel="nofollow noopener">
-					<?php echo esc_html( $fields['button_text'] ? $fields['button_text'] : 'Get Deal' ); ?>
-				</a>
-			</div>
-		</div>
-		</div>
-		<?php
-		return ob_get_clean();
-	}
+        $meta = get_post_meta( $post_id );
 
-	/**
-	 * Get template part.
-	 *
-	 * @param string $slug The slug name for the generic template.
-	 * @param string $name The name of the specialized template.
-	 */
-	public static function get_template_part( $slug, $name = null ) {
-		$templates = array();
-		if ( isset( $name ) ) {
-			$templates[] = "{$slug}-{$name}.php";
-		}
-		$templates[] = "{$slug}.php";
+        $deal_data = [
+            'product_name'          => $meta['_btdeals_product_name'][0] ?? '',
+            'offer_url'             => $meta['_btdeals_offer_url'][0] ?? '',
+            'old_price'             => floatval( $meta['_btdeals_offer_old_price'][0] ?? 0 ),
+            'sale_price'            => floatval( $meta['_btdeals_offer_sale_price'][0] ?? 0 ),
+            'coupon_code'           => $meta['_btdeals_coupon_code'][0] ?? '',
+            'button_text'           => $meta['_btdeals_button_text'][0] ?? '',
+            'thumbnail_id'          => $meta['_btdeals_thumbnail_id'][0] ?? '',
+            'discount_tag'          => $meta['_btdeals_discount_tag'][0] ?? '',
+            'short_description'     => $meta['_btdeals_short_description'][0] ?? '',
+            'expiry_date'           => $meta['_btdeals_expiry_date'][0] ?? '',
+            'offer_thumbnail_url'   => $meta['_btdeals_offer_thumbnail_url'][0] ?? '',
+            'product_thumbnail_url' => $meta['_btdeals_product_thumbnail_url'][0] ?? '',
+            'is_expired'            => ( $meta['_btdeals_is_expired'][0] ?? 'off' ) === 'on',
+            'verify_label'          => $meta['_btdeals_verify_label'][0] ?? '',
+            'gallery_images'        => maybe_unserialize( $meta['_btdeals_gallery_images'][0] ?? [] ),
+            'disclaimer'            => $meta['_btdeals_disclaimer'][0] ?? '',
+        ];
 
-		// Look for template in theme or child theme.
-		$template = locate_template( $templates );
+        // Calculate discount
+        $deal_data['discount_percent'] = self::calculate_discount( $deal_data['old_price'], $deal_data['sale_price'] );
 
-		// If not found, look in our plugin's templates directory.
-		if ( ! $template ) {
-			foreach ( $templates as $template_name ) {
-				$plugin_template = plugin_dir_path( dirname( __FILE__ ) ) . 'templates/' . $template_name;
-				if ( file_exists( $plugin_template ) ) {
-					$template = $plugin_template;
-					break;
-				}
-			}
-		}
+        // Get store info
+        $store_info = self::get_store_info( $post_id );
+        $deal_data['store_name'] = $store_info['name'];
+        $deal_data['store_logo'] = $store_info['logo'];
 
-		if ( $template ) {
-			load_template( $template, false );
-		}
-	}
+        // Fallbacks
+        $deal_data['title'] = ! empty( $deal_data['product_name'] ) ? $deal_data['product_name'] : get_the_title( $post_id );
+        $deal_data['description'] = ! empty( $deal_data['short_description'] ) ? $deal_data['short_description'] : get_the_excerpt( $post_id );
+        $deal_data['button_text'] = ! empty( $deal_data['button_text'] ) ? $deal_data['button_text'] : __( 'Get Deal', 'bigtricks-deals' );
+
+        // Thumbnail URL
+        $deal_data['thumbnail_url'] = self::get_thumbnail_url( $post_id, $deal_data );
+
+        // Cache the data for 1 hour
+        $cache_duration = apply_filters( 'btdeals_cache_duration', HOUR_IN_SECONDS );
+        set_transient( $cache_key, $deal_data, $cache_duration );
+
+        return $deal_data;
+    }
+
+    /**
+     * Calculate discount percentage.
+     *
+     * @param float $old_price  The original price.
+     * @param float $sale_price The sale price.
+     * @return int The discount percentage.
+     */
+    public static function calculate_discount( $old_price, $sale_price ) {
+        if ( $old_price > $sale_price && $old_price > 0 ) {
+            return round( ( ( $old_price - $sale_price ) / $old_price ) * 100 );
+        }
+        return 0;
+    }
+
+    /**
+     * Get store information for a deal.
+     *
+     * @param int $post_id The ID of the deal post.
+     * @return array An array containing the store name and logo URL.
+     */
+    public static function get_store_info( $post_id ) {
+        $stores = get_the_terms( $post_id, 'store' );
+        if ( $stores && ! is_wp_error( $stores ) ) {
+            $store = reset( $stores );
+            return [
+                'name' => $store->name,
+                'logo' => get_term_meta( $store->term_id, '_btdeals_store_logo', true ),
+            ];
+        }
+        return [ 'name' => '', 'logo' => '' ];
+    }
+
+    /**
+     * Get the primary thumbnail URL for a deal.
+     *
+     * @param int   $post_id   The ID of the deal post.
+     * @param array $deal_data The deal data array.
+     * @return string The thumbnail URL.
+     */
+    public static function get_thumbnail_url( $post_id, $deal_data ) {
+        if ( ! empty( $deal_data['offer_thumbnail_url'] ) ) {
+            return $deal_data['offer_thumbnail_url'];
+        }
+        if ( ! empty( $deal_data['product_thumbnail_url'] ) ) {
+            return $deal_data['product_thumbnail_url'];
+        }
+        if ( ! empty( $deal_data['thumbnail_id'] ) ) {
+            return wp_get_attachment_image_url( $deal_data['thumbnail_id'], 'large' );
+        }
+        if ( has_post_thumbnail( $post_id ) ) {
+            return get_the_post_thumbnail_url( $post_id, 'large' );
+        }
+        return ''; // Return empty string if no thumbnail is found
+    }
 }
