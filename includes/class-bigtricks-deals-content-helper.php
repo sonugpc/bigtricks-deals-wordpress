@@ -120,4 +120,67 @@ class Bigtricks_Deals_Content_Helper {
         }
         return ''; // Return empty string if no thumbnail is found
     }
+
+    /**
+     * Get deals content for a specific store.
+     *
+     * @param int $store_id The ID of the store term.
+     * @param int $posts_per_page The number of deals to retrieve.
+     * @param int $page The page number.
+     * @return string The HTML content for the deals.
+     */
+    public static function get_deals_content( $store_id, $posts_per_page = 6, $page = 1 ) {
+        $args = [
+            'post_type'      => 'deal',
+            'posts_per_page' => $posts_per_page,
+            'paged'          => $page,
+            'tax_query'      => [
+                [
+                    'taxonomy' => 'store',
+                    'field'    => 'term_id',
+                    'terms'    => $store_id,
+                ],
+            ],
+        ];
+
+        $query = new WP_Query( $args );
+        $html = '';
+
+        if ( $query->have_posts() ) {
+            while ( $query->have_posts() ) {
+                $query->the_post();
+                $html .= self::render_deal_item( get_the_ID() );
+            }
+            wp_reset_postdata();
+        }
+
+        return $html;
+    }
+
+    /**
+     * Render a single deal item.
+     *
+     * @param int $post_id The ID of the deal post.
+     * @return string The HTML for a single deal item.
+     */
+    public static function render_deal_item( $post_id ) {
+        $deal_data = self::get_deal_data( $post_id );
+        ob_start();
+        ?>
+        <div class="deal-item">
+            <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" target="_blank" rel="noopener noreferrer">
+                <img src="<?php echo esc_url( $deal_data['thumbnail_url'] ); ?>" alt="<?php echo esc_attr( $deal_data['title'] ); ?>">
+                <h3><?php echo esc_html( $deal_data['title'] ); ?></h3>
+            </a>
+            <p><?php echo esc_html( $deal_data['description'] ); ?></p>
+            <div class="price-wrapper">
+                <span class="sale-price"><?php echo esc_html( $deal_data['sale_price'] ); ?></span>
+                <?php if ( $deal_data['old_price'] > 0 ) : ?>
+                    <span class="old-price"><del><?php echo esc_html( $deal_data['old_price'] ); ?></del></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
 }

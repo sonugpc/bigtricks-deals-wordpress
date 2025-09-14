@@ -181,26 +181,35 @@ class Bigtricks_Deals_Admin {
 	 */
 	public function render_deal_meta_box( $post ) {
 		wp_nonce_field( 'btdeals_save_deal_meta_data', 'btdeals_meta_box_nonce' );
-
+	
+		// Get all post meta data in a single call.
+		$all_meta = get_post_meta( $post->ID );
+	
+		// Helper function to get meta value.
+		$get_meta = function( $key ) use ( $all_meta ) {
+			return isset( $all_meta[ $key ][0] ) ? $all_meta[ $key ][0] : '';
+		};
+	
 		$fields = [
-			'product_name'           => get_post_meta( $post->ID, '_btdeals_product_name', true ),
-			'short_description'      => get_post_meta( $post->ID, '_btdeals_short_description', true ),
-			'offer_url'              => get_post_meta( $post->ID, '_btdeals_offer_url', true ),
-			'disclaimer'             => get_post_meta( $post->ID, '_btdeals_disclaimer', true ),
-			'offer_old_price'        => get_post_meta( $post->ID, '_btdeals_offer_old_price', true ),
-			'offer_sale_price'       => get_post_meta( $post->ID, '_btdeals_offer_sale_price', true ),
-			'coupon_code'            => get_post_meta( $post->ID, '_btdeals_coupon_code', true ),
-			'expiration_date'        => get_post_meta( $post->ID, '_btdeals_expiration_date', true ),
-			'mask_coupon'            => get_post_meta( $post->ID, '_btdeals_mask_coupon', true ),
-			'is_expired'             => get_post_meta( $post->ID, '_btdeals_is_expired', true ),
-			'verify_label'           => get_post_meta( $post->ID, '_btdeals_verify_label', true ),
-			'button_text'            => get_post_meta( $post->ID, '_btdeals_button_text', true ),
-			'product_thumbnail_url'  => get_post_meta( $post->ID, '_btdeals_product_thumbnail_url', true ),
-			'offer_thumbnail_url'    => get_post_meta( $post->ID, '_btdeals_offer_thumbnail_url', true ),
-			'product_feature'        => get_post_meta( $post->ID, '_btdeals_product_feature', true ),
-			'store'                  => get_post_meta( $post->ID, '_btdeals_store', true ),
-			'brand_logo_url'         => get_post_meta( $post->ID, '_btdeals_brand_logo_url', true ),
-			'discount_tag'           => get_post_meta( $post->ID, '_btdeals_discount_tag', true ),
+			'product_name'           => $get_meta( '_btdeals_product_name' ),
+			'short_description'      => $get_meta( '_btdeals_short_description' ),
+			'offer_url'              => $get_meta( '_btdeals_offer_url' ),
+			'disclaimer'             => $get_meta( '_btdeals_disclaimer' ),
+			'offer_old_price'        => $get_meta( '_btdeals_offer_old_price' ),
+			'offer_sale_price'       => $get_meta( '_btdeals_offer_sale_price' ),
+			'coupon_code'            => $get_meta( '_btdeals_coupon_code' ),
+			'expiration_date'        => $get_meta( '_btdeals_expiration_date' ),
+			'mask_coupon'            => $get_meta( '_btdeals_mask_coupon' ),
+			'is_expired'             => $get_meta( '_btdeals_is_expired' ),
+			'verify_label'           => $get_meta( '_btdeals_verify_label' ),
+			'button_text'            => $get_meta( '_btdeals_button_text' ),
+			'product_thumbnail_url'  => $get_meta( '_btdeals_product_thumbnail_url' ),
+			'offer_thumbnail_url'    => $get_meta( '_btdeals_offer_thumbnail_url' ),
+			'product_feature'        => $get_meta( '_btdeals_product_feature' ),
+			'store'                  => $get_meta( '_btdeals_store' ),
+			'brand_logo_url'         => $get_meta( '_btdeals_brand_logo_url' ),
+			'discount_tag'           => $get_meta( '_btdeals_discount_tag' ),
+			'product_id'             => $get_meta( '_btdeals_product_id' ),
 		];
 		?>
 		<table class="form-table">
@@ -530,12 +539,19 @@ class Bigtricks_Deals_Admin {
 			register_rest_field( 'deal', $field, array(
 				'get_callback'    => function( $object, $field_name, $request ) {
 					$post_id = $object['id'];
+					$all_meta = get_post_meta( $post_id );
+		
+					$get_meta = function( $key ) use ( $all_meta ) {
+						return $all_meta[ $key ][0] ?? '';
+					};
+		
 					if ( 'discount' === $field_name ) {
-						$price = (float) get_post_meta( $post_id, '_btdeals_offer_sale_price', true );
-						$mrp = (float) get_post_meta( $post_id, '_btdeals_offer_old_price', true );
+						$price = (float) $get_meta( '_btdeals_offer_sale_price' );
+						$mrp   = (float) $get_meta( '_btdeals_offer_old_price' );
 						return ( $mrp > 0 && $price < $mrp ) ? round( ( ( $mrp - $price ) / $mrp ) * 100 ) : 0;
 					}
-					return get_post_meta( $post_id, '_btdeals_' . $field_name, true );
+		
+					return $get_meta( '_btdeals_' . $field_name );
 				},
 				'update_callback' => function( $value, $object, $field_name ) {
 					if ( 'discount' === $field_name ) {
@@ -647,27 +663,35 @@ class Bigtricks_Deals_Admin {
 		$deals = array();
 
 		if ( $query->have_posts() ) {
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				$post_id = get_the_ID();
-				
-				$deal_data = array(
-					'id'            => $post_id,
-					'title'         => get_the_title(),
-					'url'           => get_permalink(),
-					'offer_url'     => get_post_meta( $post_id, '_btdeals_offer_url', true ),
-					'old_price'     => get_post_meta( $post_id, '_btdeals_offer_old_price', true ),
-					'sale_price'    => get_post_meta( $post_id, '_btdeals_offer_sale_price', true ),
-					'discount_tag'  => get_post_meta( $post_id, '_btdeals_discount_tag', true ),
-					'button_text'   => get_post_meta( $post_id, '_btdeals_button_text', true ) ?: 'Get Deal',
-					'thumbnail'     => '',
-					'store_name'    => ''
-				);
-
+			$post_ids = wp_list_pluck( $query->posts, 'ID' );
+			update_post_meta_cache( $post_ids );
+			update_object_term_cache( $post_ids, 'deal' );
+	
+			foreach ( $query->posts as $post ) {
+				$post_id = $post->ID;
+	
+				$all_meta = get_post_meta( $post_id );
+				$get_meta = function( $key ) use ( $all_meta ) {
+					return $all_meta[ $key ][0] ?? '';
+				};
+	
+				$deal_data = [
+					'id'           => $post_id,
+					'title'        => get_the_title( $post_id ),
+					'url'          => get_permalink( $post_id ),
+					'offer_url'    => $get_meta( '_btdeals_offer_url' ),
+					'old_price'    => $get_meta( '_btdeals_offer_old_price' ),
+					'sale_price'   => $get_meta( '_btdeals_offer_sale_price' ),
+					'discount_tag' => $get_meta( '_btdeals_discount_tag' ),
+					'button_text'  => $get_meta( '_btdeals_button_text' ) ?: 'Get Deal',
+					'thumbnail'    => '',
+					'store_name'   => '',
+				];
+	
 				// Get thumbnail with priority: Offer > Product > Post thumbnail
-				$offer_thumbnail_url = get_post_meta( $post_id, '_btdeals_offer_thumbnail_url', true );
-				$product_thumbnail_url = get_post_meta( $post_id, '_btdeals_product_thumbnail_url', true );
-
+				$offer_thumbnail_url   = $get_meta( '_btdeals_offer_thumbnail_url' );
+				$product_thumbnail_url = $get_meta( '_btdeals_product_thumbnail_url' );
+	
 				if ( ! empty( $offer_thumbnail_url ) ) {
 					$deal_data['thumbnail'] = $offer_thumbnail_url;
 				} elseif ( ! empty( $product_thumbnail_url ) ) {
@@ -675,13 +699,13 @@ class Bigtricks_Deals_Admin {
 				} else {
 					$deal_data['thumbnail'] = get_the_post_thumbnail_url( $post_id, 'medium' );
 				}
-
+	
 				// Get store name
 				$stores = wp_get_post_terms( $post_id, 'store' );
-				if ( ! empty( $stores ) ) {
+				if ( ! empty( $stores ) && ! is_wp_error( $stores ) ) {
 					$deal_data['store_name'] = $stores[0]->name;
 				}
-
+	
 				$deals[] = $deal_data;
 			}
 			wp_reset_postdata();
@@ -875,14 +899,34 @@ class Bigtricks_Deals_Admin {
 		}
 
 		// Handle CSV preview
-		$csv_headers = array();
-		$csv_preview = array();
-		$show_mapping = false;
+		$csv_headers   = array();
+		$csv_preview   = array();
+		$show_mapping  = false;
+		$transient_key = '';
 
 		if ( isset( $_POST['bt_preview_csv'] ) && wp_verify_nonce( $_POST['bt_preview_nonce'], 'bt_preview_csv' ) ) {
-			$csv_headers = $this->get_csv_headers();
-			$csv_preview = $this->get_csv_preview();
-			$show_mapping = true;
+			if ( isset( $_FILES['import_file'] ) && UPLOAD_ERR_OK === $_FILES['import_file']['error'] ) {
+				// Handle the file upload securely.
+				$uploaded_file    = $_FILES['import_file'];
+				$upload_overrides = [
+					'test_form' => false,
+					'mimes'     => [ 'csv' => 'text/csv' ],
+				];
+				$movefile         = wp_handle_upload( $uploaded_file, $upload_overrides );
+
+				if ( $movefile && ! isset( $movefile['error'] ) ) {
+					$transient_key = 'bt_deals_import_' . md5( $movefile['file'] );
+					set_transient( $transient_key, $movefile['file'], HOUR_IN_SECONDS );
+
+					$csv_headers  = $this->get_csv_headers( $movefile['file'] );
+					$csv_preview  = $this->get_csv_preview( $movefile['file'] );
+					$show_mapping = true;
+				} else {
+					echo '<div class="notice notice-error"><p>' . esc_html( $movefile['error'] ) . '</p></div>';
+				}
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'File upload failed. Please try again.', 'bigtricks-deals' ) . '</p></div>';
+			}
 		}
 		?>
 		<div class="wrap">
@@ -972,9 +1016,8 @@ class Bigtricks_Deals_Admin {
 					<input type="hidden" name="csv_delimiter" value="<?php echo esc_attr( $_POST['csv_delimiter'] ?? ',' ); ?>">
 					<input type="hidden" name="skip_first_row" value="<?php echo esc_attr( $_POST['skip_first_row'] ?? '1' ); ?>">
 
-					<!-- Hidden file input to preserve the uploaded file -->
-					<input type="hidden" name="import_file_data" value="<?php echo esc_attr( base64_encode( file_get_contents( $_FILES['import_file']['tmp_name'] ) ) ); ?>">
-					<input type="hidden" name="import_file_name" value="<?php echo esc_attr( $_FILES['import_file']['name'] ); ?>">
+					<!-- Pass the transient key instead of file content -->
+					<input type="hidden" name="import_transient_key" value="<?php echo esc_attr( $transient_key ); ?>">
 
 					<table class="form-table">
 						<tbody>
@@ -1102,13 +1145,12 @@ class Bigtricks_Deals_Admin {
 	 * @since 1.0.0
 	 * @return array Array of CSV headers.
 	 */
-	private function get_csv_headers() {
-		if ( ! isset( $_FILES['import_file'] ) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK ) {
+	private function get_csv_headers( $file_path ) {
+		if ( ! file_exists( $file_path ) ) {
 			return array();
 		}
 
 		$csv_delimiter = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
-		$file_path = $_FILES['import_file']['tmp_name'];
 
 		if ( ! file_exists( $file_path ) ) {
 			return array();
@@ -1138,14 +1180,13 @@ class Bigtricks_Deals_Admin {
 	 * @since 1.0.0
 	 * @return array Array of CSV preview rows.
 	 */
-	private function get_csv_preview() {
-		if ( ! isset( $_FILES['import_file'] ) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK ) {
+	private function get_csv_preview( $file_path ) {
+		if ( ! file_exists( $file_path ) ) {
 			return array();
 		}
 
-		$csv_delimiter = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
+		$csv_delimiter  = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
 		$skip_first_row = isset( $_POST['skip_first_row'] ) ? (bool) $_POST['skip_first_row'] : true;
-		$file_path = $_FILES['import_file']['tmp_name'];
 
 		if ( ! file_exists( $file_path ) ) {
 			return array();
@@ -1257,28 +1298,25 @@ class Bigtricks_Deals_Admin {
 	 */
 	private function process_import() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'You do not have sufficient permissions to access this page.', 'bigtricks-deals' ) );
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'bigtricks-deals' ) );
 		}
 
-		$csv_delimiter = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
-		$create_stores = isset( $_POST['create_stores'] ) ? (bool) $_POST['create_stores'] : true;
-		$preserve_dates = isset( $_POST['preserve_dates'] ) ? (bool) $_POST['preserve_dates'] : true;
+		$csv_delimiter   = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
+		$create_stores   = isset( $_POST['create_stores'] ) ? (bool) $_POST['create_stores'] : true;
+		$preserve_dates  = isset( $_POST['preserve_dates'] ) ? (bool) $_POST['preserve_dates'] : true;
 		$update_existing = isset( $_POST['update_existing'] ) ? (bool) $_POST['update_existing'] : false;
-		$field_mapping = isset( $_POST['field_mapping'] ) ? $_POST['field_mapping'] : array();
+		$field_mapping   = isset( $_POST['field_mapping'] ) ? (array) $_POST['field_mapping'] : array();
+		$transient_key   = isset( $_POST['import_transient_key'] ) ? sanitize_text_field( $_POST['import_transient_key'] ) : '';
 
-		// Handle file data from hidden input (for mapping workflow)
-		if ( isset( $_POST['import_file_data'] ) && isset( $_POST['import_file_name'] ) ) {
-			$file_content = base64_decode( $_POST['import_file_data'] );
-			$file_name = sanitize_file_name( $_POST['import_file_name'] );
-
-			// Create temporary file
-			$temp_file = wp_tempnam( $file_name );
-			file_put_contents( $temp_file, $file_content );
-			$file_path = $temp_file;
-		} elseif ( isset( $_FILES['import_file'] ) && $_FILES['import_file']['error'] === UPLOAD_ERR_OK ) {
-			$file_path = $_FILES['import_file']['tmp_name'];
+		// Handle file data from transient.
+		if ( ! empty( $transient_key ) ) {
+			$file_path = get_transient( $transient_key );
+			if ( ! $file_path || ! file_exists( $file_path ) ) {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'Import file has expired or is invalid. Please upload again.', 'bigtricks-deals' ) . '</p></div>';
+				return;
+			}
 		} else {
-			echo '<div class="notice notice-error"><p>' . __( 'No valid CSV file found.', 'bigtricks-deals' ) . '</p></div>';
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'No valid CSV file found.', 'bigtricks-deals' ) . '</p></div>';
 			return;
 		}
 
@@ -1308,9 +1346,13 @@ class Bigtricks_Deals_Admin {
 			}
 		}
 
-		// Clean up temp file if created
-		if ( isset( $temp_file ) && file_exists( $temp_file ) ) {
-			unlink( $temp_file );
+		// Clean up temp file and transient.
+		if ( ! empty( $transient_key ) ) {
+			$file_path = get_transient( $transient_key );
+			if ( $file_path && file_exists( $file_path ) ) {
+				unlink( $file_path );
+			}
+			delete_transient( $transient_key );
 		}
 
 		// Display results
