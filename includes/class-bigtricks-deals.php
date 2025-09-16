@@ -144,13 +144,9 @@ class Bigtricks_Deals {
 	$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_settings_menu' );
 
 	$this->loader->add_action( 'wp_ajax_load_more_content', $plugin_admin, 'load_more_content_callback' );
-	$this->loader->add_action( 'wp_ajax_nopriv_load_more_content', $plugin_admin, 'load_more_content_callback' );
 	$this->loader->add_action( 'wp_ajax_bt_get_similar_deals', $plugin_admin, 'get_similar_deals_callback' );
-	$this->loader->add_action( 'wp_ajax_nopriv_bt_get_similar_deals', $plugin_admin, 'get_similar_deals_callback' );
 	$this->loader->add_action( 'wp_ajax_bt_get_post_store', $plugin_admin, 'get_post_store_callback' );
-	$this->loader->add_action( 'wp_ajax_nopriv_bt_get_post_store', $plugin_admin, 'get_post_store_callback' );
 	$this->loader->add_action( 'wp_ajax_bt_track_event', $plugin_admin, 'track_event_callback' );
-	$this->loader->add_action( 'wp_ajax_nopriv_bt_track_event', $plugin_admin, 'track_event_callback' );
 	}
 
 	/**
@@ -169,6 +165,15 @@ class Bigtricks_Deals {
 
 		$this->loader->add_action( 'wp_ajax_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
 		$this->loader->add_action( 'wp_ajax_nopriv_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
+
+		$this->loader->add_action( 'wp_ajax_load_more_content', $plugin_public, 'load_more_content_callback' );
+		$this->loader->add_action( 'wp_ajax_nopriv_load_more_content', $plugin_public, 'load_more_content_callback' );
+		$this->loader->add_action( 'wp_ajax_bt_get_similar_deals', $plugin_public, 'get_similar_deals_callback' );
+		$this->loader->add_action( 'wp_ajax_nopriv_bt_get_similar_deals', $plugin_public, 'get_similar_deals_callback' );
+		$this->loader->add_action( 'wp_ajax_bt_get_post_store', $plugin_public, 'get_post_store_callback' );
+		$this->loader->add_action( 'wp_ajax_nopriv_bt_get_post_store', $plugin_public, 'get_post_store_callback' );
+		$this->loader->add_action( 'wp_ajax_bt_track_event', $plugin_public, 'track_event_callback' );
+		$this->loader->add_action( 'wp_ajax_nopriv_bt_track_event', $plugin_public, 'track_event_callback' );
 	}
 
 	/**

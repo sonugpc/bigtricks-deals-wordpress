@@ -49,8 +49,10 @@ class Bigtricks_Deals_Admin {
 	public function __construct( $plugin_name, $version ) {
 
 		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+		$this->version     = $version;
 
+		add_action( 'wp_ajax_bt_start_import', array( $this, 'start_import_callback' ) );
+		add_action( 'wp_ajax_bt_process_import_chunk', array( $this, 'process_import_chunk_callback' ) );
 	}
 
 	/**
@@ -569,223 +571,6 @@ class Bigtricks_Deals_Admin {
 	}
 
 	/**
-	 * AJAX callback to load more content.
-	 *
-	 * @since 1.0.0
-	 */
-	public function load_more_content_callback() {
-		check_ajax_referer( 'store_content_nonce', 'nonce' );
-
-		$store_id = isset( $_POST['store_id'] ) ? intval( $_POST['store_id'] ) : 0;
-		$content_type = isset( $_POST['content_type'] ) ? sanitize_text_field( $_POST['content_type'] ) : '';
-		$page = isset( $_POST['page'] ) ? intval( $_POST['page'] ) : 2;
-
-		if ( ! $store_id || ! $content_type ) {
-			wp_send_json_error( 'Missing parameters.' );
-		}
-
-		$html = '';
-		if ( 'deal' === $content_type ) {
-			$html = Bigtricks_Deals_Content_Helper::get_deals_content( $store_id, 6, $page );
-		}
-
-		wp_send_json_success( $html );
-	}
-
-	/**
-	 * AJAX callback to get similar deals.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_similar_deals_callback() {
-		check_ajax_referer( 'bt_deals_nonce', 'nonce' );
-
-		$deal_id = isset( $_POST['deal_id'] ) ? intval( $_POST['deal_id'] ) : 0;
-		$limit = isset( $_POST['limit'] ) ? intval( $_POST['limit'] ) : 6;
-
-		if ( ! $deal_id ) {
-			wp_send_json_error( 'Invalid deal ID.' );
-		}
-
-		// Get current deal's store terms
-		$current_stores = wp_get_post_terms( $deal_id, 'store', array( 'fields' => 'ids' ) );
-		$current_categories = wp_get_post_terms( $deal_id, 'category', array( 'fields' => 'ids' ) );
-
-		$args = array(
-			'post_type'      => 'deal',
-			'post_status'    => 'publish',
-			'posts_per_page' => $limit,
-			'post__not_in'   => array( $deal_id ),
-			'meta_query'     => array(
-				'relation' => 'OR',
-				array(
-					'key'     => '_btdeals_is_expired',
-					'value'   => 'off',
-					'compare' => '='
-				),
-				array(
-					'key'     => '_btdeals_is_expired',
-					'compare' => 'NOT EXISTS'
-				)
-			)
-		);
-
-		// Prioritize deals from same store or category
-		if ( ! empty( $current_stores ) || ! empty( $current_categories ) ) {
-			$tax_query = array( 'relation' => 'OR' );
-
-			if ( ! empty( $current_stores ) ) {
-				$tax_query[] = array(
-					'taxonomy' => 'store',
-					'field'    => 'term_id',
-					'terms'    => $current_stores,
-				);
-			}
-
-			if ( ! empty( $current_categories ) ) {
-				$tax_query[] = array(
-					'taxonomy' => 'category',
-					'field'    => 'term_id',
-					'terms'    => $current_categories,
-				);
-			}
-
-			$args['tax_query'] = $tax_query;
-		}
-
-		// If no deals found with matching taxonomy, get any recent deals
-		$query = new WP_Query( $args );
-		if ( ! $query->have_posts() ) {
-			// Remove tax query and get any recent deals
-			unset( $args['tax_query'] );
-			$query = new WP_Query( $args );
-		}
-		$deals = array();
-
-		if ( $query->have_posts() ) {
-			$post_ids = wp_list_pluck( $query->posts, 'ID' );
-			update_post_meta_cache( $post_ids );
-			update_object_term_cache( $post_ids, 'deal' );
-	
-			foreach ( $query->posts as $post ) {
-				$post_id = $post->ID;
-	
-				$all_meta = get_post_meta( $post_id );
-				$get_meta = function( $key ) use ( $all_meta ) {
-					return $all_meta[ $key ][0] ?? '';
-				};
-	
-				$deal_data = [
-					'id'           => $post_id,
-					'title'        => get_the_title( $post_id ),
-					'url'          => get_permalink( $post_id ),
-					'offer_url'    => $get_meta( '_btdeals_offer_url' ),
-					'old_price'    => $get_meta( '_btdeals_offer_old_price' ),
-					'sale_price'   => $get_meta( '_btdeals_offer_sale_price' ),
-					'discount_tag' => $get_meta( '_btdeals_discount_tag' ),
-					'button_text'  => $get_meta( '_btdeals_button_text' ) ?: 'Get Deal',
-					'thumbnail'    => '',
-					'store_name'   => '',
-				];
-	
-				// Get thumbnail with priority: Offer > Product > Post thumbnail
-				$offer_thumbnail_url   = $get_meta( '_btdeals_offer_thumbnail_url' );
-				$product_thumbnail_url = $get_meta( '_btdeals_product_thumbnail_url' );
-	
-				if ( ! empty( $offer_thumbnail_url ) ) {
-					$deal_data['thumbnail'] = $offer_thumbnail_url;
-				} elseif ( ! empty( $product_thumbnail_url ) ) {
-					$deal_data['thumbnail'] = $product_thumbnail_url;
-				} else {
-					$deal_data['thumbnail'] = get_the_post_thumbnail_url( $post_id, 'medium' );
-				}
-	
-				// Get store name
-				$stores = wp_get_post_terms( $post_id, 'store' );
-				if ( ! empty( $stores ) && ! is_wp_error( $stores ) ) {
-					$deal_data['store_name'] = $stores[0]->name;
-				}
-	
-				$deals[] = $deal_data;
-			}
-			wp_reset_postdata();
-		}
-
-		wp_send_json_success( $deals );
-	}
-
-	/**
-	 * AJAX callback to get post store information.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_post_store_callback() {
-		check_ajax_referer( 'bt_get_store_nonce', 'nonce' );
-
-		$post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
-
-		if ( ! $post_id ) {
-			wp_send_json_error( 'Invalid post ID.' );
-		}
-
-		// Get store from meta field first
-		$store_name = get_post_meta( $post_id, '_btdeals_store', true );
-
-		// If not found in meta, get from taxonomy
-		if ( empty( $store_name ) ) {
-			$store_terms = wp_get_post_terms( $post_id, 'store', array( 'fields' => 'names' ) );
-			if ( ! empty( $store_terms ) ) {
-				$store_name = $store_terms[0];
-			}
-		}
-
-		wp_send_json_success( array( 'store_name' => $store_name ) );
-	}
-
-	/**
-	 * AJAX callback to track events.
-	 *
-	 * @since 1.0.0
-	 */
-	public function track_event_callback() {
-		check_ajax_referer( 'bt_deals_nonce', 'nonce' );
-
-		$event_type = isset( $_POST['event_type'] ) ? sanitize_text_field( $_POST['event_type'] ) : '';
-		$deal_id = isset( $_POST['deal_id'] ) ? intval( $_POST['deal_id'] ) : 0;
-		$extra_data = isset( $_POST['extra_data'] ) ? sanitize_text_field( $_POST['extra_data'] ) : '';
-
-		if ( ! $event_type || ! $deal_id ) {
-			wp_send_json_error( 'Missing required parameters.' );
-		}
-
-		// Log event - you can customize this to integrate with your analytics
-		$log_data = array(
-			'event_type' => $event_type,
-			'deal_id'    => $deal_id,
-			'extra_data' => $extra_data,
-			'user_ip'    => $_SERVER['REMOTE_ADDR'] ?? '',
-			'timestamp'  => current_time( 'mysql' ),
-			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
-		);
-
-		// Store in transient for basic tracking (you can replace with database table)
-		$existing_logs = get_transient( 'bt_deals_event_logs' ) ?: array();
-		$existing_logs[] = $log_data;
-
-		// Keep only last 1000 entries
-		if ( count( $existing_logs ) > 1000 ) {
-			$existing_logs = array_slice( $existing_logs, -1000 );
-		}
-
-		set_transient( 'bt_deals_event_logs', $existing_logs, DAY_IN_SECONDS );
-
-		// Fire action hook for custom integrations
-		do_action( 'bt_deals_event_tracked', $event_type, $deal_id, $extra_data, $log_data );
-
-		wp_send_json_success( array( 'message' => 'Event tracked successfully' ) );
-	}
-
-	/**
 	 * Add import menu to admin.
 	 *
 	 * @since 1.0.0
@@ -984,6 +769,12 @@ class Bigtricks_Deals_Admin {
 
 			<?php if ( $show_mapping && !empty( $csv_headers ) ): ?>
 			<div id="bt-mapping-section" style="margin-top: 30px;">
+				<div id="bt-import-progress" style="display:none;">
+					<h2><?php esc_html_e( 'Importing Deals...', 'bigtricks-deals' ); ?></h2>
+					<progress id="bt-import-progress-bar" value="0" max="100" style="width: 100%;"></progress>
+					<p id="bt-import-progress-text"></p>
+				</div>
+
 				<h2><?php _e( 'Field Mapping', 'bigtricks-deals' ); ?></h2>
 				<p><?php _e( 'Map your CSV columns to the corresponding deal fields:', 'bigtricks-deals' ); ?></p>
 
@@ -1097,7 +888,7 @@ class Bigtricks_Deals_Admin {
 						</tbody>
 					</table>
 
-					<?php submit_button( __( 'Import Deals', 'bigtricks-deals' ), 'primary', 'bt_import_deals' ); ?>
+					<?php submit_button( __( 'Start Import', 'bigtricks-deals' ), 'primary', 'bt_start_import_btn' ); ?>
 				</form>
 			</div>
 			<?php endif; ?>
@@ -1134,6 +925,75 @@ class Bigtricks_Deals_Admin {
 
 			// Initially disable preview button
 			$('#bt-preview-btn').prop('disabled', true);
+
+			// Handle import via AJAX
+			$('#bt_start_import_btn').on('click', function(e) {
+				e.preventDefault();
+
+				var $form = $(this).closest('form');
+				var formData = new FormData($form[0]);
+				formData.append('action', 'bt_start_import');
+				formData.append('nonce', '<?php echo wp_create_nonce( 'bt_import_deals' ); ?>');
+
+				$('#bt-mapping-section').hide();
+				$('#bt-import-progress').show();
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: formData,
+					processData: false,
+					contentType: false,
+					success: function(response) {
+						if (response.success) {
+							processImportChunk(response.data);
+						} else {
+							alert(response.data.message);
+						}
+					},
+					error: function() {
+						alert('An error occurred while starting the import.');
+					}
+				});
+			});
+
+			function processImportChunk(data) {
+				var totalRows = data.total_rows;
+				var processed = data.processed_rows || 0;
+
+				if (processed >= totalRows) {
+					$('#bt-import-progress-text').text('Import complete!');
+					return;
+				}
+
+				var progress = (processed / totalRows) * 100;
+				$('#bt-import-progress-bar').val(progress);
+				$('#bt-import-progress-text').text('Processed ' + processed + ' of ' + totalRows + ' rows...');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'bt_process_import_chunk',
+						nonce: '<?php echo wp_create_nonce( 'bt_import_deals' ); ?>',
+						transient_key: data.transient_key,
+						field_mapping: data.field_mapping,
+						create_stores: data.create_stores,
+						preserve_dates: data.preserve_dates,
+						update_existing: data.update_existing,
+					},
+					success: function(response) {
+						if (response.success) {
+							processImportChunk(response.data);
+						} else {
+							alert(response.data.message);
+						}
+					},
+					error: function() {
+						alert('An error occurred while processing a chunk.');
+					}
+				});
+			}
 		});
 		</script>
 		<?php
@@ -1296,85 +1156,80 @@ class Bigtricks_Deals_Admin {
 	 *
 	 * @since 1.0.0
 	 */
-	private function process_import() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'bigtricks-deals' ) );
+	public function process_import() {
+		// This function is intentionally left blank as the import process is now handled by AJAX.
+	}
+
+	public function start_import_callback() {
+		check_ajax_referer( 'bt_import_deals', 'nonce' );
+
+		$transient_key = isset( $_POST['import_transient_key'] ) ? sanitize_text_field( $_POST['import_transient_key'] ) : '';
+		$file_path     = get_transient( $transient_key );
+
+		if ( ! $file_path || ! file_exists( $file_path ) ) {
+			wp_send_json_error( [ 'message' => __( 'Import file not found or expired.', 'bigtricks-deals' ) ] );
 		}
 
-		$csv_delimiter   = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
-		$create_stores   = isset( $_POST['create_stores'] ) ? (bool) $_POST['create_stores'] : true;
-		$preserve_dates  = isset( $_POST['preserve_dates'] ) ? (bool) $_POST['preserve_dates'] : true;
-		$update_existing = isset( $_POST['update_existing'] ) ? (bool) $_POST['update_existing'] : false;
-		$field_mapping   = isset( $_POST['field_mapping'] ) ? (array) $_POST['field_mapping'] : array();
-		$transient_key   = isset( $_POST['import_transient_key'] ) ? sanitize_text_field( $_POST['import_transient_key'] ) : '';
-
-		// Handle file data from transient.
-		if ( ! empty( $transient_key ) ) {
-			$file_path = get_transient( $transient_key );
-			if ( ! $file_path || ! file_exists( $file_path ) ) {
-				echo '<div class="notice notice-error"><p>' . esc_html__( 'Import file has expired or is invalid. Please upload again.', 'bigtricks-deals' ) . '</p></div>';
-				return;
-			}
-		} else {
-			echo '<div class="notice notice-error"><p>' . esc_html__( 'No valid CSV file found.', 'bigtricks-deals' ) . '</p></div>';
-			return;
-		}
-
-		// Parse the CSV data with custom mapping
+		$csv_delimiter = isset( $_POST['csv_delimiter'] ) ? sanitize_text_field( $_POST['csv_delimiter'] ) : ',';
+		$field_mapping = isset( $_POST['field_mapping'] ) ? (array) $_POST['field_mapping'] : [];
+		
 		$deals = $this->parse_csv_data_with_mapping( $file_path, $csv_delimiter, $field_mapping );
 
 		if ( empty( $deals ) ) {
-			echo '<div class="notice notice-error"><p>' . __( 'No valid deals found in the CSV file.', 'bigtricks-deals' ) . '</p></div>';
-			return;
+			wp_send_json_error( [ 'message' => __( 'No deals found in the CSV file.', 'bigtricks-deals' ) ] );
 		}
 
-		$imported = 0;
-		$updated = 0;
-		$skipped = 0;
-		$errors = array();
+		set_transient( $transient_key . '_data', $deals, HOUR_IN_SECONDS );
 
-		foreach ( $deals as $deal_data ) {
-			$result = $this->import_single_deal_with_mapping( $deal_data, $create_stores, $preserve_dates, $update_existing );
-			if ( $result === 'imported' ) {
-				$imported++;
-			} elseif ( $result === 'updated' ) {
-				$updated++;
-			} elseif ( $result === 'skipped' ) {
-				$skipped++;
-			} else {
-				$errors[] = $result;
-			}
+		wp_send_json_success( [
+			'total_rows'      => count( $deals ),
+			'processed_rows'  => 0,
+			'transient_key'   => $transient_key,
+			'field_mapping'   => $field_mapping,
+			'create_stores'   => isset( $_POST['create_stores'] ),
+			'preserve_dates'  => isset( $_POST['preserve_dates'] ),
+			'update_existing' => isset( $_POST['update_existing'] ),
+		] );
+	}
+
+	public function process_import_chunk_callback() {
+		check_ajax_referer( 'bt_import_deals', 'nonce' );
+
+		$transient_key   = isset( $_POST['transient_key'] ) ? sanitize_text_field( $_POST['transient_key'] ) : '';
+		$deals           = get_transient( $transient_key . '_data' );
+		$field_mapping   = isset( $_POST['field_mapping'] ) ? (array) $_POST['field_mapping'] : [];
+		$create_stores   = isset( $_POST['create_stores'] ) ? (bool) $_POST['create_stores'] : true;
+		$preserve_dates  = isset( $_POST['preserve_dates'] ) ? (bool) $_POST['preserve_dates'] : true;
+		$update_existing = isset( $_POST['update_existing'] ) ? (bool) $_POST['update_existing'] : false;
+
+		if ( false === $deals ) {
+			wp_send_json_error( [ 'message' => __( 'Import data not found.', 'bigtricks-deals' ) ] );
 		}
 
-		// Clean up temp file and transient.
-		if ( ! empty( $transient_key ) ) {
-			$file_path = get_transient( $transient_key );
-			if ( $file_path && file_exists( $file_path ) ) {
-				unlink( $file_path );
-			}
+		$chunk_size = 20;
+		$chunk      = array_splice( $deals, 0, $chunk_size );
+
+		foreach ( $chunk as $deal_data ) {
+			$this->import_single_deal_with_mapping( $deal_data, $create_stores, $preserve_dates, $update_existing );
+		}
+
+		$processed_rows = count( get_transient( $transient_key . '_data' ) ) - count( $deals );
+		set_transient( $transient_key . '_data', $deals, HOUR_IN_SECONDS );
+
+		if ( empty( $deals ) ) {
 			delete_transient( $transient_key );
+			delete_transient( $transient_key . '_data' );
 		}
 
-		// Display results
-		if ( $imported > 0 ) {
-			echo '<div class="notice notice-success"><p>' . sprintf( __( 'Successfully imported %d deals.', 'bigtricks-deals' ), $imported ) . '</p></div>';
-		}
-
-		if ( $updated > 0 ) {
-			echo '<div class="notice notice-info"><p>' . sprintf( __( 'Successfully updated %d existing deals.', 'bigtricks-deals' ), $updated ) . '</p></div>';
-		}
-
-		if ( $skipped > 0 ) {
-			echo '<div class="notice notice-warning"><p>' . sprintf( __( 'Skipped %d deals (already exist or invalid data).', 'bigtricks-deals' ), $skipped ) . '</p></div>';
-		}
-
-		if ( ! empty( $errors ) ) {
-			echo '<div class="notice notice-error"><p>' . __( 'Import completed with errors:', 'bigtricks-deals' ) . '</p><ul>';
-			foreach ( $errors as $error ) {
-				echo '<li>' . esc_html( $error ) . '</li>';
-			}
-			echo '</ul></div>';
-		}
+		wp_send_json_success( [
+			'total_rows'      => count( get_transient( $transient_key . '_data' ) ) + $processed_rows,
+			'processed_rows'  => $processed_rows,
+			'transient_key'   => $transient_key,
+			'field_mapping'   => $field_mapping,
+			'create_stores'   => $create_stores,
+			'preserve_dates'  => $preserve_dates,
+			'update_existing' => $update_existing,
+		] );
 	}
 
 	/**
