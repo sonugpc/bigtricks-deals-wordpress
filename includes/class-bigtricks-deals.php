@@ -76,6 +76,7 @@ class Bigtricks_Deals {
 		$this->load_dependencies();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+		$this->define_shared_hooks();
 
 	}
 
@@ -139,14 +140,9 @@ class Bigtricks_Deals {
 	$this->loader->add_action( 'add_meta_boxes', $plugin_admin, 'add_deal_meta_box' );
 	$this->loader->add_action( 'save_post_deal', $plugin_admin, 'save_deal_meta_data' );
 	$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_rest_fields' );
+	$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_api_routes' );
 	$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_media_library' );
-	$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_import_menu' );
 	$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_settings_menu' );
-
-	$this->loader->add_action( 'wp_ajax_load_more_content', $plugin_admin, 'load_more_content_callback' );
-	$this->loader->add_action( 'wp_ajax_bt_get_similar_deals', $plugin_admin, 'get_similar_deals_callback' );
-	$this->loader->add_action( 'wp_ajax_bt_get_post_store', $plugin_admin, 'get_post_store_callback' );
-	$this->loader->add_action( 'wp_ajax_bt_track_event', $plugin_admin, 'track_event_callback' );
 	}
 
 	/**
@@ -165,13 +161,22 @@ class Bigtricks_Deals {
 
 		$this->loader->add_action( 'wp_ajax_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
 		$this->loader->add_action( 'wp_ajax_nopriv_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
+	}
 
+	/**
+	 * Register all of the hooks related to the shared functionality
+	 * of the plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 */
+	private function define_shared_hooks() {
+		$plugin_public = new Bigtricks_Deals_Public( $this->get_plugin_name(), $this->get_version() );
+	
 		$this->loader->add_action( 'wp_ajax_load_more_content', $plugin_public, 'load_more_content_callback' );
 		$this->loader->add_action( 'wp_ajax_nopriv_load_more_content', $plugin_public, 'load_more_content_callback' );
 		$this->loader->add_action( 'wp_ajax_bt_get_similar_deals', $plugin_public, 'get_similar_deals_callback' );
 		$this->loader->add_action( 'wp_ajax_nopriv_bt_get_similar_deals', $plugin_public, 'get_similar_deals_callback' );
-		$this->loader->add_action( 'wp_ajax_bt_get_post_store', $plugin_public, 'get_post_store_callback' );
-		$this->loader->add_action( 'wp_ajax_nopriv_bt_get_post_store', $plugin_public, 'get_post_store_callback' );
 		$this->loader->add_action( 'wp_ajax_bt_track_event', $plugin_public, 'track_event_callback' );
 		$this->loader->add_action( 'wp_ajax_nopriv_bt_track_event', $plugin_public, 'track_event_callback' );
 	}

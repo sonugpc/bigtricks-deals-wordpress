@@ -79,17 +79,19 @@ extract( $deal_data );
                 <div class="bt-product-info">
                     <h1 class="bt-product-title"><?php echo esc_html( $title ); ?></h1>
 
-                    <?php if ( $store_name ) : ?>
-                        <div class="bt-store-info">
-                            <?php if ( $store_logo ) : ?>
-                                <img src="<?php echo esc_url( $store_logo ); ?>"
-                                     alt="<?php echo esc_attr( $store_name ); ?>"
-                                     class="bt-store-logo"
-                                     width="32"
-                                     height="32">
-                            <?php endif; ?>
-                            <span class="bt-store-name"><?php echo esc_html( $store_name ); ?></span>
-                        </div>
+                    <?php if ( $store_name && $store_url ) : ?>
+                        <a href="<?php echo esc_url( $store_url ); ?>" class="bt-store-info-link">
+                            <div class="bt-store-info">
+                                <?php if ( $store_logo ) : ?>
+                                    <img src="<?php echo esc_url( $store_logo ); ?>"
+                                         alt="<?php echo esc_attr( $store_name ); ?>"
+                                         class="bt-store-logo"
+                                         width="32"
+                                         height="32">
+                                <?php endif; ?>
+                                <span class="bt-store-name"><?php echo esc_html( $store_name ); ?></span>
+                            </div>
+                        </a>
                     <?php endif; ?>
 
                     <!-- Pricing -->
@@ -177,7 +179,7 @@ extract( $deal_data );
                 <div class="bt-main-content">
                     <?php if (get_the_content()): ?>
                         <div class="bt-full-description entry-content">
-                            <h2><?php esc_html_e( 'Product Details', 'bigtricks-deals' ); ?></h2>
+                            <h2><?php esc_html_e( 'Offer Details', 'bigtricks-deals' ); ?></h2>
                             <?php the_content(); ?>
                         </div>
                     <?php endif; ?>

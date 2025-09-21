@@ -17,8 +17,33 @@
     <?php
     the_content();
 
-    echo do_shortcode( '[quick_offer id="' . get_the_ID() . '"]' );
+    $deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( get_the_ID() );
     ?>
+    <div class="quick-offer-cta">
+        <div class="deal-info">
+            <h3><?php echo esc_html( $deal_data['title'] ); ?></h3>
+            <div class="price-wrapper">
+                <span class="sale-price"><?php echo esc_html( $deal_data['sale_price'] ); ?></span>
+                <?php if ( $deal_data['old_price'] > 0 ) : ?>
+                    <span class="old-price"><del><?php echo esc_html( $deal_data['old_price'] ); ?></del></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="deal-actions">
+            <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" class="button btn-deal" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $deal_data['button_text'] ); ?></a>
+            <?php if ( ! empty( $deal_data['store_name'] ) && ! empty( $deal_data['store_url'] ) ) : ?>
+                <div class="deal-store">
+                    <a href="<?php echo esc_url( $deal_data['store_url'] ); ?>">
+                        <?php if ( ! empty( $deal_data['store_logo'] ) ) : ?>
+                            <img src="<?php echo esc_url( $deal_data['store_logo'] ); ?>" alt="<?php echo esc_attr( $deal_data['store_name'] ); ?>" class="store-logo">
+                        <?php else : ?>
+                            <?php echo esc_html( $deal_data['store_name'] ); ?>
+                        <?php endif; ?>
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
 </div><!-- .entry-content -->
 
 <footer class="entry-footer">

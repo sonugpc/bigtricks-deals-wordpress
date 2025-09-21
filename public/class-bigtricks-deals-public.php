@@ -71,16 +71,21 @@ class Bigtricks_Deals_Public {
 	 */
 	public function render_loot_deal_shortcode( $atts ) {
 		$atts = shortcode_atts( array(
-			'id' => 0,
+			'id'    => 0,
+			'field' => '',
 		), $atts, 'loot-deal' );
 
-		$post_id = intval( $atts['id'] );
+		$post_id = ( 0 === $atts['id'] ) ? get_the_ID() : intval( $atts['id'] );
 
 		if ( ! $post_id || 'deal' !== get_post_type( $post_id ) ) {
 			return '';
 		}
 
-		return Bigtricks_Deals_Content_Helper::render_deal_item( $post_id );
+		if ( ! empty( $atts['field'] ) ) {
+			return get_post_meta( $post_id, $atts['field'], true );
+		}
+		$deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( $post_id );
+		return Bigtricks_Deals_Content_Helper::render_deal_item( $deal_data );
 	}
 
 	/**
@@ -133,10 +138,15 @@ class Bigtricks_Deals_Public {
 		ob_start();
 
 		if ( $deals_query->have_posts() ) {
+			$post_ids = wp_list_pluck( $deals_query->posts, 'ID' );
+			update_post_meta_cache( $post_ids );
+			update_object_term_cache( $post_ids, 'deal' );
+			
 			echo '<div class="rb-row rb-n20-gutter">';
 			while ( $deals_query->have_posts() ) {
 				$deals_query->the_post();
-				echo Bigtricks_Deals_Content_Helper::render_deal_item( get_the_ID() );
+				$deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( get_the_ID() );
+				echo Bigtricks_Deals_Content_Helper::render_deal_item( $deal_data );
 			}
 			echo '</div>';
 
@@ -253,10 +263,15 @@ class Bigtricks_Deals_Public {
 		$deals_query = new WP_Query( $args );
 
 		if ( $deals_query->have_posts() ) {
+			$post_ids = wp_list_pluck( $deals_query->posts, 'ID' );
+			update_post_meta_cache( $post_ids );
+			update_object_term_cache( $post_ids, 'deal' );
+
 			ob_start();
 			while ( $deals_query->have_posts() ) {
 				$deals_query->the_post();
-				echo Bigtricks_Deals_Content_Helper::render_deal_item( get_the_ID() );
+				$deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( get_the_ID() );
+				echo Bigtricks_Deals_Content_Helper::render_deal_item( $deal_data );
 			}
 			wp_send_json_success( ob_get_clean() );
 		} else {
@@ -295,18 +310,17 @@ class Bigtricks_Deals_Public {
 	 */
 	public function get_similar_deals_callback() {
 		check_ajax_referer( 'bt_deals_nonce', 'nonce' );
-
+	
 		$deal_id = isset( $_POST['deal_id'] ) ? intval( $_POST['deal_id'] ) : 0;
-		$limit = isset( $_POST['limit'] ) ? intval( $_POST['limit'] ) : 6;
-
+		$limit   = isset( $_POST['limit'] ) ? intval( $_POST['limit'] ) : 6;
+	
 		if ( ! $deal_id ) {
 			wp_send_json_error( 'Invalid deal ID.' );
 		}
-
-		// Get current deal's store terms
-		$current_stores = wp_get_post_terms( $deal_id, 'store', array( 'fields' => 'ids' ) );
+	
+		$current_stores     = wp_get_post_terms( $deal_id, 'store', array( 'fields' => 'ids' ) );
 		$current_categories = wp_get_post_terms( $deal_id, 'category', array( 'fields' => 'ids' ) );
-
+	
 		$args = array(
 			'post_type'      => 'deal',
 			'post_status'    => 'publish',
@@ -317,19 +331,17 @@ class Bigtricks_Deals_Public {
 				array(
 					'key'     => '_btdeals_is_expired',
 					'value'   => 'off',
-					'compare' => '='
+					'compare' => '=',
 				),
 				array(
 					'key'     => '_btdeals_is_expired',
-					'compare' => 'NOT EXISTS'
-				)
-			)
+					'compare' => 'NOT EXISTS',
+				),
+			),
 		);
-
-		// Prioritize deals from same store or category
+	
 		if ( ! empty( $current_stores ) || ! empty( $current_categories ) ) {
 			$tax_query = array( 'relation' => 'OR' );
-
 			if ( ! empty( $current_stores ) ) {
 				$tax_query[] = array(
 					'taxonomy' => 'store',
@@ -337,7 +349,6 @@ class Bigtricks_Deals_Public {
 					'terms'    => $current_stores,
 				);
 			}
-
 			if ( ! empty( $current_categories ) ) {
 				$tax_query[] = array(
 					'taxonomy' => 'category',
@@ -345,97 +356,28 @@ class Bigtricks_Deals_Public {
 					'terms'    => $current_categories,
 				);
 			}
-
 			$args['tax_query'] = $tax_query;
 		}
-
-		// If no deals found with matching taxonomy, get any recent deals
+	
 		$query = new WP_Query( $args );
 		if ( ! $query->have_posts() ) {
-			// Remove tax query and get any recent deals
 			unset( $args['tax_query'] );
 			$query = new WP_Query( $args );
 		}
+	
 		$deals = array();
-
 		if ( $query->have_posts() ) {
 			$post_ids = wp_list_pluck( $query->posts, 'ID' );
 			update_post_meta_cache( $post_ids );
 			update_object_term_cache( $post_ids, 'deal' );
 	
 			foreach ( $query->posts as $post ) {
-				$post_id = $post->ID;
-	
-				$all_meta = get_post_meta( $post_id );
-				$get_meta = function( $key ) use ( $all_meta ) {
-					return $all_meta[ $key ][0] ?? '';
-				};
-	
-				$deal_data = [
-					'id'           => $post_id,
-					'title'        => get_the_title( $post_id ),
-					'url'          => get_permalink( $post_id ),
-					'offer_url'    => $get_meta( '_btdeals_offer_url' ),
-					'old_price'    => $get_meta( '_btdeals_offer_old_price' ),
-					'sale_price'   => $get_meta( '_btdeals_offer_sale_price' ),
-					'discount_tag' => $get_meta( '_btdeals_discount_tag' ),
-					'button_text'  => $get_meta( '_btdeals_button_text' ) ?: 'Get Deal',
-					'thumbnail'    => '',
-					'store_name'   => '',
-				];
-	
-				// Get thumbnail with priority: Offer > Product > Post thumbnail
-				$offer_thumbnail_url   = $get_meta( '_btdeals_offer_thumbnail_url' );
-				$product_thumbnail_url = $get_meta( '_btdeals_product_thumbnail_url' );
-	
-				if ( ! empty( $offer_thumbnail_url ) ) {
-					$deal_data['thumbnail'] = $offer_thumbnail_url;
-				} elseif ( ! empty( $product_thumbnail_url ) ) {
-					$deal_data['thumbnail'] = $product_thumbnail_url;
-				} else {
-					$deal_data['thumbnail'] = get_the_post_thumbnail_url( $post_id, 'medium' );
-				}
-	
-				// Get store name
-				$stores = wp_get_post_terms( $post_id, 'store' );
-				if ( ! empty( $stores ) && ! is_wp_error( $stores ) ) {
-					$deal_data['store_name'] = $stores[0]->name;
-				}
-	
-				$deals[] = $deal_data;
+				$deals[] = Bigtricks_Deals_Content_Helper::get_deal_data( $post->ID );
 			}
 			wp_reset_postdata();
 		}
-
+	
 		wp_send_json_success( $deals );
-	}
-
-	/**
-	 * AJAX callback to get post store information.
-	 *
-	 * @since 1.0.0
-	 */
-	public function get_post_store_callback() {
-		check_ajax_referer( 'bt_get_store_nonce', 'nonce' );
-
-		$post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
-
-		if ( ! $post_id ) {
-			wp_send_json_error( 'Invalid post ID.' );
-		}
-
-		// Get store from meta field first
-		$store_name = get_post_meta( $post_id, '_btdeals_store', true );
-
-		// If not found in meta, get from taxonomy
-		if ( empty( $store_name ) ) {
-			$store_terms = wp_get_post_terms( $post_id, 'store', array( 'fields' => 'names' ) );
-			if ( ! empty( $store_terms ) ) {
-				$store_name = $store_terms[0];
-			}
-		}
-
-		wp_send_json_success( array( 'store_name' => $store_name ) );
 	}
 
 	/**

@@ -22,6 +22,11 @@ class Bigtricks_Deals_Content_Helper {
             return $cached_data;
         }
 
+        $post = get_post( $post_id );
+        if ( ! $post ) {
+            return [];
+        }
+
         $meta = get_post_meta( $post_id );
 
         $deal_data = [
@@ -50,10 +55,11 @@ class Bigtricks_Deals_Content_Helper {
         $store_info = self::get_store_info( $post_id );
         $deal_data['store_name'] = $store_info['name'];
         $deal_data['store_logo'] = $store_info['logo'];
+        $deal_data['store_url'] = $store_info['url'];
 
         // Fallbacks
-        $deal_data['title'] = ! empty( $deal_data['product_name'] ) ? $deal_data['product_name'] : get_the_title( $post_id );
-        $deal_data['description'] = ! empty( $deal_data['short_description'] ) ? $deal_data['short_description'] : get_the_excerpt( $post_id );
+        $deal_data['title'] = ! empty( $deal_data['product_name'] ) ? $deal_data['product_name'] : $post->post_title;
+        $deal_data['description'] = ! empty( $deal_data['short_description'] ) ? $deal_data['short_description'] : $post->post_excerpt;
         $deal_data['button_text'] = ! empty( $deal_data['button_text'] ) ? $deal_data['button_text'] : __( 'Get Deal', 'bigtricks-deals' );
 
         // Thumbnail URL
@@ -92,10 +98,11 @@ class Bigtricks_Deals_Content_Helper {
             $store = reset( $stores );
             return [
                 'name' => $store->name,
-                'logo' => get_term_meta( $store->term_id, '_btdeals_store_logo', true ),
+                'logo' => get_term_meta( $store->term_id, 'thumb_image', true ),
+                'url'  => get_term_link( $store ),
             ];
         }
-        return [ 'name' => '', 'logo' => '' ];
+        return [ 'name' => '', 'logo' => '', 'url' => '' ];
     }
 
     /**
@@ -147,9 +154,14 @@ class Bigtricks_Deals_Content_Helper {
         $html = '';
 
         if ( $query->have_posts() ) {
+			$post_ids = wp_list_pluck( $query->posts, 'ID' );
+			update_post_meta_cache( $post_ids );
+			update_object_term_cache( $post_ids, 'deal' );
+
             while ( $query->have_posts() ) {
                 $query->the_post();
-                $html .= self::render_deal_item( get_the_ID() );
+				$deal_data = self::get_deal_data( get_the_ID() );
+                $html .= self::render_deal_item( $deal_data );
             }
             wp_reset_postdata();
         }
@@ -160,11 +172,10 @@ class Bigtricks_Deals_Content_Helper {
     /**
      * Render a single deal item.
      *
-     * @param int $post_id The ID of the deal post.
+     * @param array $deal_data The data of the deal post.
      * @return string The HTML for a single deal item.
      */
-    public static function render_deal_item( $post_id ) {
-        $deal_data = self::get_deal_data( $post_id );
+    public static function render_deal_item( $deal_data ) {
         ob_start();
         ?>
         <div class="deal-item">
@@ -172,13 +183,31 @@ class Bigtricks_Deals_Content_Helper {
                 <img src="<?php echo esc_url( $deal_data['thumbnail_url'] ); ?>" alt="<?php echo esc_attr( $deal_data['title'] ); ?>">
                 <h3><?php echo esc_html( $deal_data['title'] ); ?></h3>
             </a>
-            <p><?php echo esc_html( $deal_data['description'] ); ?></p>
             <div class="price-wrapper">
                 <span class="sale-price"><?php echo esc_html( $deal_data['sale_price'] ); ?></span>
                 <?php if ( $deal_data['old_price'] > 0 ) : ?>
                     <span class="old-price"><del><?php echo esc_html( $deal_data['old_price'] ); ?></del></span>
                 <?php endif; ?>
             </div>
+            <div class="deal-buttons">
+                <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" class="button btn-deal" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $deal_data['button_text'] ); ?></a>
+            </div>
+            <?php if ( ! empty( $deal_data['short_description'] ) ) : ?>
+                <div class="deal-short-description">
+                    <?php echo wp_kses_post( $deal_data['short_description'] ); ?>
+                </div>
+            <?php endif; ?>
+            <?php if ( ! empty( $deal_data['store_name'] ) && ! empty( $deal_data['store_url'] ) ) : ?>
+                <div class="deal-store">
+                    <a href="<?php echo esc_url( $deal_data['store_url'] ); ?>">
+                        <?php if ( ! empty( $deal_data['store_logo'] ) ) : ?>
+                            <img src="<?php echo esc_url( $deal_data['store_logo'] ); ?>" alt="<?php echo esc_attr( $deal_data['store_name'] ); ?>" class="store-logo">
+                        <?php else : ?>
+                            <?php echo esc_html( $deal_data['store_name'] ); ?>
+                        <?php endif; ?>
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
         <?php
         return ob_get_clean();

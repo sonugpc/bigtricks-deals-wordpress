@@ -86,6 +86,7 @@
 .bt-main-image img {
     width: 100%;
     height: auto;
+    max-height: 300px;
     aspect-ratio: 4 / 3;
     object-fit: contain;
     display: block;
@@ -154,7 +155,7 @@
 }
 
 .bt-product-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 700;
     line-height: 1.2;
     color: var(--bt-text-primary);
@@ -265,18 +266,18 @@
 .bt-primary-btn {
     background: var(--bt-primary);
     color: white;
-    padding: var(--bt-spacing) var(--bt-spacing-xl);
+    padding: var(--bt-spacing-sm) var(--bt-spacing-lg);
     border-radius: var(--bt-radius);
     text-decoration: none;
     font-weight: 600;
-    font-size: 1.125rem;
+    font-size: 1rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--bt-spacing-sm);
     box-shadow: var(--bt-shadow);
     border: 2px solid var(--bt-primary);
-    min-height: 48px;
+    min-height: 40px;
 }
 
 .bt-primary-btn:hover {
@@ -625,6 +626,16 @@
 
 .deal-item-btn:hover {
     background: var(--bt-primary-hover);
+}
+
+.deal-short-description {
+    background: var(--bt-bg-secondary);
+    padding: var(--bt-spacing);
+    margin: var(--bt-spacing-lg) 0;
+    border-radius: var(--bt-radius);
+    font-size: 0.875rem;
+    color: var(--bt-text-secondary);
+    border: 1px solid var(--bt-border);
 }
 
 /* Share Modal */
