@@ -141,7 +141,7 @@ class Bigtricks_Deals_Admin {
 			"rest_controller_class" => "WP_REST_Terms_Controller",
 			"show_in_quick_edit" => true,
 		];
-		register_taxonomy( "store", [ "deal" ], $args );
+		register_taxonomy( "store", [ "deal", "post" ], $args );
 	}
 
 	/**
