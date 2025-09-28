@@ -58,6 +58,7 @@ class Bigtricks_Deals_Content_Helper {
         $deal_data['store_url'] = $store_info['url'];
 
         // Fallbacks
+        $deal_data['post_id'] = $post_id;
         $deal_data['title'] = ! empty( $deal_data['product_name'] ) ? $deal_data['product_name'] : $post->post_title;
         $deal_data['description'] = ! empty( $deal_data['short_description'] ) ? $deal_data['short_description'] : $post->post_excerpt;
         $deal_data['button_text'] = ! empty( $deal_data['button_text'] ) ? $deal_data['button_text'] : __( 'Get Deal', 'bigtricks-deals' );
@@ -178,37 +179,46 @@ class Bigtricks_Deals_Content_Helper {
     public static function render_deal_item( $deal_data ) {
         ob_start();
         ?>
-        <div class="deal-item">
-            <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" target="_blank" rel="noopener noreferrer">
-                <img src="<?php echo esc_url( $deal_data['thumbnail_url'] ); ?>" alt="<?php echo esc_attr( $deal_data['title'] ); ?>">
-                <h3><?php echo esc_html( $deal_data['title'] ); ?></h3>
-            </a>
-            <div class="price-wrapper">
-                <span class="sale-price"><?php echo esc_html( $deal_data['sale_price'] ); ?></span>
-                <?php if ( $deal_data['old_price'] > 0 ) : ?>
-                    <span class="old-price"><del><?php echo esc_html( $deal_data['old_price'] ); ?></del></span>
+        <article class="bt-deal-card">
+            <?php if ( $deal_data['discount_percent'] > 0 ) : ?>
+                <div class="bt-deal-badge">
+                    <?php echo esc_html( $deal_data['discount_percent'] ); ?>% OFF
+                </div>
+            <?php endif; ?>
+            
+            <div class="bt-deal-image">
+                <a href="<?php echo esc_url( get_permalink( $deal_data['post_id'] ) ); ?>">
+                    <img src="<?php echo esc_url( $deal_data['thumbnail_url'] ); ?>" alt="<?php echo esc_attr( $deal_data['title'] ); ?>" loading="lazy">
+                </a>
+            </div>
+            
+            <div class="bt-deal-content">
+                <h3 class="bt-deal-title">
+                    <a href="<?php echo esc_url( get_permalink( $deal_data['post_id'] ) ); ?>"><?php echo esc_html( $deal_data['title'] ); ?></a>
+                </h3>
+                
+                <?php if ( ! empty( $deal_data['store_name'] ) && ! empty( $deal_data['store_url'] ) ) : ?>
+                    <a href="<?php echo esc_url( $deal_data['store_url'] ); ?>" class="bt-deal-store"><?php echo esc_html( $deal_data['store_name'] ); ?></a>
                 <?php endif; ?>
-            </div>
-            <div class="deal-buttons">
-                <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" class="button btn-deal" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $deal_data['button_text'] ); ?></a>
-            </div>
-            <?php if ( ! empty( $deal_data['short_description'] ) ) : ?>
-                <div class="deal-short-description">
-                    <?php echo wp_kses_post( $deal_data['short_description'] ); ?>
+                
+                <div class="bt-deal-pricing">
+                    <?php if ( $deal_data['sale_price'] > 0 ) : ?>
+                        <span class="bt-deal-sale-price">₹<?php echo esc_html( number_format( $deal_data['sale_price'] ) ); ?></span>
+                    <?php endif; ?>
+                    
+                    <?php if ( $deal_data['old_price'] > 0 ) : ?>
+                        <span class="bt-deal-old-price">₹<?php echo esc_html( number_format( $deal_data['old_price'] ) ); ?></span>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
-            <?php if ( ! empty( $deal_data['store_name'] ) && ! empty( $deal_data['store_url'] ) ) : ?>
-                <div class="deal-store">
-                    <a href="<?php echo esc_url( $deal_data['store_url'] ); ?>">
-                        <?php if ( ! empty( $deal_data['store_logo'] ) ) : ?>
-                            <img src="<?php echo esc_url( $deal_data['store_logo'] ); ?>" alt="<?php echo esc_attr( $deal_data['store_name'] ); ?>" class="store-logo">
-                        <?php else : ?>
-                            <?php echo esc_html( $deal_data['store_name'] ); ?>
-                        <?php endif; ?>
+                
+                <div class="bt-deal-actions">
+                    <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" class="bt-btn bt-btn-primary" target="_blank" rel="noopener">
+                        <?php echo esc_html( $deal_data['button_text'] ); ?>
                     </a>
+                    <a href="<?php echo esc_url( get_permalink( $deal_data['post_id'] ) ); ?>" class="bt-btn bt-btn-secondary">Details</a>
                 </div>
-            <?php endif; ?>
-        </div>
+            </div>
+        </article>
         <?php
         return ob_get_clean();
     }

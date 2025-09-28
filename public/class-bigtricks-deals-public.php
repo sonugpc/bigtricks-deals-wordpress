@@ -96,6 +96,9 @@ class Bigtricks_Deals_Public {
 	 * @return string Shortcode output.
 	 */
 	public function render_loot_deals_archive_shortcode( $atts ) {
+		// Enqueue the grid stylesheet.
+		wp_enqueue_style( 'bt-deals-grid', plugin_dir_url( __FILE__ ) . 'css/bt-deals-grid.css', array(), $this->version, 'all' );
+
 		$atts = shortcode_atts( array(
 			'category' => '',
 			'store'    => '',
@@ -142,7 +145,7 @@ class Bigtricks_Deals_Public {
 			update_meta_cache( 'post', $post_ids );
 			update_object_term_cache( $post_ids, 'deal' );
 			
-			echo '<div class="rb-row rb-n20-gutter">';
+			echo '<div class="bt-grid bt-grid-3 bt-deals-grid">';
 			while ( $deals_query->have_posts() ) {
 				$deals_query->the_post();
 				$deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( get_the_ID() );
