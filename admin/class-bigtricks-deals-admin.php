@@ -196,6 +196,7 @@ class Bigtricks_Deals_Admin {
 		if ( ! empty( $store_terms ) && ! is_wp_error( $store_terms ) ) {
 			$store_name = $store_terms[0];
 		}
+
 	
 		$fields = [
 			'product_name'           => $get_meta( '_btdeals_product_name' ),
@@ -494,6 +495,12 @@ class Bigtricks_Deals_Admin {
 	
 		// Clear the deal data cache
 		delete_transient( 'btdeal_data_' . $post_id );
+
+		// Update category taxonomy
+		if ( isset( $_POST['tax_input']['category'] ) ) {
+			$term_ids = array_map( 'intval', $_POST['tax_input']['category'] );
+			wp_set_post_categories( $post_id, $term_ids );
+		}
 	}
 
 	/**

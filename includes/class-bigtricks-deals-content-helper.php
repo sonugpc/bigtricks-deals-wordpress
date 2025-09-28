@@ -155,7 +155,7 @@ class Bigtricks_Deals_Content_Helper {
 
         if ( $query->have_posts() ) {
 			$post_ids = wp_list_pluck( $query->posts, 'ID' );
-			update_post_meta_cache( $post_ids );
+			update_meta_cache( 'post', $post_ids );
 			update_object_term_cache( $post_ids, 'deal' );
 
             while ( $query->have_posts() ) {
