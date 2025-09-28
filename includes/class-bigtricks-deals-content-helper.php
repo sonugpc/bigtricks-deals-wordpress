@@ -178,6 +178,7 @@ class Bigtricks_Deals_Content_Helper {
      */
     public static function render_deal_item( $deal_data ) {
         ob_start();
+        $post_id = isset( $deal_data['post_id'] ) ? $deal_data['post_id'] : 0;
         ?>
         <article class="bt-deal-card">
             <?php if ( $deal_data['discount_percent'] > 0 ) : ?>
@@ -187,14 +188,14 @@ class Bigtricks_Deals_Content_Helper {
             <?php endif; ?>
             
             <div class="bt-deal-image">
-                <a href="<?php echo esc_url( get_permalink( $deal_data['post_id'] ) ); ?>">
+                <a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
                     <img src="<?php echo esc_url( $deal_data['thumbnail_url'] ); ?>" alt="<?php echo esc_attr( $deal_data['title'] ); ?>" loading="lazy">
                 </a>
             </div>
             
             <div class="bt-deal-content">
                 <h3 class="bt-deal-title">
-                    <a href="<?php echo esc_url( get_permalink( $deal_data['post_id'] ) ); ?>"><?php echo esc_html( $deal_data['title'] ); ?></a>
+                    <a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>"><?php echo esc_html( $deal_data['title'] ); ?></a>
                 </h3>
                 
                 <?php if ( ! empty( $deal_data['store_name'] ) && ! empty( $deal_data['store_url'] ) ) : ?>
@@ -215,7 +216,7 @@ class Bigtricks_Deals_Content_Helper {
                     <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" class="bt-btn bt-btn-primary" target="_blank" rel="noopener">
                         <?php echo esc_html( $deal_data['button_text'] ); ?>
                     </a>
-                    <a href="<?php echo esc_url( get_permalink( $deal_data['post_id'] ) ); ?>" class="bt-btn bt-btn-secondary">Details</a>
+                    <a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>" class="bt-btn bt-btn-secondary">Details</a>
                 </div>
             </div>
         </article>
