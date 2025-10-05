@@ -467,8 +467,8 @@ class Bigtricks_Deals_Admin {
 		$meta_fields = [
 			'product_name'           => 'sanitize_text_field',
 			'offer_url'              => 'esc_url_raw',
-			'offer_old_price'        => 'sanitize_text_field',
-			'offer_sale_price'       => 'sanitize_text_field',
+			'offer_old_price'        => function($value) { return is_numeric($value) ? sanitize_text_field($value) : '0'; },
+			'offer_sale_price'       => function($value) { return is_numeric($value) ? sanitize_text_field($value) : '0'; },
 			'coupon_code'            => 'sanitize_text_field',
 			'expiration_date'        => 'sanitize_text_field',
 			'verify_label'           => 'sanitize_text_field',
@@ -729,8 +729,8 @@ class Bigtricks_Deals_Admin {
 		$meta_fields_to_sanitize = [
 			'product_name'           => 'sanitize_text_field',
 			'offer_url'              => 'esc_url_raw',
-			'offer_old_price'        => 'sanitize_text_field',
-			'offer_sale_price'       => 'sanitize_text_field',
+			'offer_old_price'        => function($value) { return is_numeric($value) ? sanitize_text_field($value) : '0'; },
+			'offer_sale_price'       => function($value) { return is_numeric($value) ? sanitize_text_field($value) : '0'; },
 			'coupon_code'            => 'sanitize_text_field',
 			'expiration_date'        => 'sanitize_text_field',
 			'verify_label'           => 'sanitize_text_field',
