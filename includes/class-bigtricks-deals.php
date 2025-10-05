@@ -158,9 +158,12 @@ class Bigtricks_Deals {
 
 		$this->loader->add_action( 'init', $plugin_public, 'add_shortcodes' );
 		$this->loader->add_filter( 'single_template', $plugin_public, 'load_single_deal_template' );
+		$this->loader->add_filter( 'archive_template', $plugin_public, 'load_deal_archive_template' );
 
 		$this->loader->add_action( 'wp_ajax_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
 		$this->loader->add_action( 'wp_ajax_nopriv_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
+		$this->loader->add_action( 'wp_ajax_filter_deals', $plugin_public, 'filter_deals_ajax_handler' );
+		$this->loader->add_action( 'wp_ajax_nopriv_filter_deals', $plugin_public, 'filter_deals_ajax_handler' );
 	}
 
 	/**

@@ -100,10 +100,20 @@ class Bigtricks_Deals_Public {
 		wp_enqueue_style( 'bt-deals-grid', plugin_dir_url( __FILE__ ) . 'css/bt-deals-grid.css', array(), $this->version, 'all' );
 
 		$atts = shortcode_atts( array(
-			'category' => '',
-			'store'    => '',
-			'count'    => 12,
+			'category'    => '',
+			'store'       => '',
+			'count'       => 12,
+			'show_filters' => 'false',
 		), $atts, 'loot-deals' );
+
+		// Enqueue archive script if filters are enabled
+		if ( 'true' === $atts['show_filters'] ) {
+			wp_enqueue_script( 'bt-deals-archive', plugin_dir_url( __FILE__ ) . 'js/bt-deals-archive.js', array( 'jquery' ), $this->version, true );
+			wp_localize_script( 'bt-deals-archive', 'btDealsAjax', array(
+				'ajaxurl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'bt_deals_nonce' ),
+			) );
+		}
 
 		$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
 
@@ -140,12 +150,17 @@ class Bigtricks_Deals_Public {
 
 		ob_start();
 
+		// Output filters if enabled
+		if ( 'true' === $atts['show_filters'] ) {
+			echo $this->render_deals_filters( $atts );
+		}
+
 		if ( $deals_query->have_posts() ) {
 			$post_ids = wp_list_pluck( $deals_query->posts, 'ID' );
 			update_meta_cache( 'post', $post_ids );
 			update_object_term_cache( $post_ids, 'deal' );
-			
-			echo '<div class="bt-grid bt-grid-3 bt-deals-grid">';
+
+			echo '<div class="bt-grid bt-grid-3 bt-deals-grid" id="bt-deals-grid">';
 			while ( $deals_query->have_posts() ) {
 				$deals_query->the_post();
 				$deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( get_the_ID() );
@@ -159,7 +174,7 @@ class Bigtricks_Deals_Public {
 				echo '</div>';
 			}
 		} else {
-			echo '<p>No deals found.</p>';
+			echo '<div class="bt-grid bt-grid-3 bt-deals-grid" id="bt-deals-grid"><p>No deals found.</p></div>';
 		}
 
 		wp_reset_postdata();
@@ -179,6 +194,23 @@ class Bigtricks_Deals_Public {
 			$this->enqueue_single_deal_assets();
 			$new_template = plugin_dir_path( dirname( __FILE__ ) ) . 'templates/single-deal.php';
 			if ( '' != $new_template ) {
+				return $new_template;
+			}
+		}
+		return $template;
+	}
+
+	/**
+	 * Load custom template for deal archive page.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $template    The path of the template to include.
+	 * @return   string    The path of the template to include.
+	 */
+	public function load_deal_archive_template( $template ) {
+		if ( is_post_type_archive( 'deal' ) ) {
+			$new_template = plugin_dir_path( dirname( __FILE__ ) ) . 'templates/archive-deal.php';
+			if ( file_exists( $new_template ) ) {
 				return $new_template;
 			}
 		}
@@ -224,6 +256,121 @@ class Bigtricks_Deals_Public {
 	}
 
 	/**
+	 * AJAX handler for filtering deals.
+	 *
+	 * @since 1.0.0
+	 */
+	public function filter_deals_ajax_handler() {
+		check_ajax_referer( 'bt_deals_nonce', 'nonce' );
+
+		$filters = isset( $_POST['filters'] ) ? $_POST['filters'] : array();
+		$count = isset( $filters['count'] ) ? intval( $filters['count'] ) : 12;
+
+		$args = array(
+			'post_type'      => 'deal',
+			'post_status'    => 'publish',
+			'posts_per_page' => $count,
+			'paged'          => 1,
+		);
+
+		$tax_query = array( 'relation' => 'AND' );
+		$meta_query = array( 'relation' => 'AND' );
+
+		// Category filter
+		if ( ! empty( $filters['categories'] ) && is_array( $filters['categories'] ) ) {
+			$tax_query[] = array(
+				'taxonomy' => 'category',
+				'field'    => 'term_id',
+				'terms'    => array_map( 'intval', $filters['categories'] ),
+			);
+		}
+
+		// Store filter
+		if ( ! empty( $filters['stores'] ) && is_array( $filters['stores'] ) ) {
+			$tax_query[] = array(
+				'taxonomy' => 'store',
+				'field'    => 'term_id',
+				'terms'    => array_map( 'intval', $filters['stores'] ),
+			);
+		}
+
+		// Price filters
+		if ( ! empty( $filters['min_price'] ) ) {
+			$meta_query[] = array(
+				'key'     => '_btdeals_offer_sale_price',
+				'value'   => floatval( $filters['min_price'] ),
+				'compare' => '>=',
+				'type'    => 'DECIMAL',
+			);
+		}
+
+		if ( ! empty( $filters['max_price'] ) ) {
+			$meta_query[] = array(
+				'key'     => '_btdeals_offer_sale_price',
+				'value'   => floatval( $filters['max_price'] ),
+				'compare' => '<=',
+				'type'    => 'DECIMAL',
+			);
+		}
+
+		// Search filter
+		if ( ! empty( $filters['search'] ) ) {
+			$args['s'] = sanitize_text_field( $filters['search'] );
+		}
+
+		// Add tax and meta queries
+		if ( count( $tax_query ) > 1 ) {
+			$args['tax_query'] = $tax_query;
+		}
+
+		if ( count( $meta_query ) > 1 ) {
+			$args['meta_query'] = $meta_query;
+		}
+
+		// Exclude expired deals
+		$args['meta_query'][] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => '_btdeals_is_expired',
+				'value'   => 'off',
+				'compare' => '=',
+			),
+			array(
+				'key'     => '_btdeals_is_expired',
+				'compare' => 'NOT EXISTS',
+			),
+		);
+
+		$deals_query = new WP_Query( $args );
+
+		if ( $deals_query->have_posts() ) {
+			$post_ids = wp_list_pluck( $deals_query->posts, 'ID' );
+			update_meta_cache( 'post', $post_ids );
+			update_object_term_cache( $post_ids, 'deal' );
+
+			ob_start();
+			while ( $deals_query->have_posts() ) {
+				$deals_query->the_post();
+				$deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( get_the_ID() );
+				echo Bigtricks_Deals_Content_Helper::render_deal_item( $deal_data );
+			}
+			$deals_html = ob_get_clean();
+
+			$load_more_html = '';
+			if ( $deals_query->max_num_pages > 1 ) {
+				$load_more_html = '<button class="bt-deals-load-more" data-page="2" data-max-pages="' . esc_attr( $deals_query->max_num_pages ) . '" data-atts="' . esc_attr( json_encode( array_merge( array( 'count' => $count ), $filters ) ) ) . '">Load More Deals</button>';
+			}
+
+			wp_send_json_success( array(
+				'html'      => $deals_html,
+				'load_more' => $load_more_html,
+			) );
+		} else {
+			wp_send_json_error( 'No deals found.' );
+		}
+	}
+
+	/**
 	 * AJAX handler for loading more deals.
 	 *
 	 * @since 1.0.0
@@ -233,6 +380,7 @@ class Bigtricks_Deals_Public {
 
 		$page = intval( $_POST['page'] );
 		$atts = json_decode( stripslashes( $_POST['atts'] ), true );
+		$filters = isset( $_POST['filters'] ) ? $_POST['filters'] : array();
 
 		$args = array(
 			'post_type'      => 'deal',
@@ -242,7 +390,9 @@ class Bigtricks_Deals_Public {
 		);
 
 		$tax_query = array( 'relation' => 'AND' );
+		$meta_query = array( 'relation' => 'AND' );
 
+		// Category filter
 		if ( ! empty( $atts['category'] ) ) {
 			$tax_query[] = array(
 				'taxonomy' => 'category',
@@ -251,6 +401,15 @@ class Bigtricks_Deals_Public {
 			);
 		}
 
+		if ( ! empty( $filters['categories'] ) && is_array( $filters['categories'] ) ) {
+			$tax_query[] = array(
+				'taxonomy' => 'category',
+				'field'    => 'term_id',
+				'terms'    => array_map( 'intval', $filters['categories'] ),
+			);
+		}
+
+		// Store filter
 		if ( ! empty( $atts['store'] ) ) {
 			$tax_query[] = array(
 				'taxonomy' => 'store',
@@ -259,9 +418,59 @@ class Bigtricks_Deals_Public {
 			);
 		}
 
+		if ( ! empty( $filters['stores'] ) && is_array( $filters['stores'] ) ) {
+			$tax_query[] = array(
+				'taxonomy' => 'store',
+				'field'    => 'term_id',
+				'terms'    => array_map( 'intval', $filters['stores'] ),
+			);
+		}
+
+		// Price filters
+		if ( ! empty( $filters['min_price'] ) ) {
+			$meta_query[] = array(
+				'key'     => '_btdeals_offer_sale_price',
+				'value'   => floatval( $filters['min_price'] ),
+				'compare' => '>=',
+				'type'    => 'DECIMAL',
+			);
+		}
+
+		if ( ! empty( $filters['max_price'] ) ) {
+			$meta_query[] = array(
+				'key'     => '_btdeals_offer_sale_price',
+				'value'   => floatval( $filters['max_price'] ),
+				'compare' => '<=',
+				'type'    => 'DECIMAL',
+			);
+		}
+
+		// Search filter
+		if ( ! empty( $filters['search'] ) ) {
+			$args['s'] = sanitize_text_field( $filters['search'] );
+		}
+
 		if ( count( $tax_query ) > 1 ) {
 			$args['tax_query'] = $tax_query;
 		}
+
+		if ( count( $meta_query ) > 1 ) {
+			$args['meta_query'] = $meta_query;
+		}
+
+		// Exclude expired deals
+		$args['meta_query'][] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => '_btdeals_is_expired',
+				'value'   => 'off',
+				'compare' => '=',
+			),
+			array(
+				'key'     => '_btdeals_is_expired',
+				'compare' => 'NOT EXISTS',
+			),
+		);
 
 		$deals_query = new WP_Query( $args );
 
@@ -381,6 +590,249 @@ class Bigtricks_Deals_Public {
 		}
 	
 		wp_send_json_success( $deals );
+	}
+
+	/**
+	 * Render the deals filters UI.
+	 *
+	 * @since 1.0.0
+	 * @param array $atts Shortcode attributes.
+	 * @return string Filter HTML.
+	 */
+	public function render_deals_filters( $atts ) {
+		ob_start();
+		?>
+		<div class="bt-deals-filters">
+			<div class="bt-filters-row">
+				<div class="bt-filter-group">
+					<label for="bt-search">Search Deals:</label>
+					<input type="text" id="bt-search" placeholder="Search by title or description..." />
+				</div>
+
+				<div class="bt-filter-group">
+					<label for="bt-category">Category:</label>
+					<select id="bt-category">
+						<option value="">All Categories</option>
+						<?php
+						$categories = get_terms( array(
+							'taxonomy' => 'category',
+							'hide_empty' => true,
+						) );
+						foreach ( $categories as $category ) {
+							echo '<option value="' . esc_attr( $category->term_id ) . '">' . esc_html( $category->name ) . '</option>';
+						}
+						?>
+					</select>
+				</div>
+
+				<div class="bt-filter-group">
+					<label for="bt-store">Store:</label>
+					<select id="bt-store">
+						<option value="">All Stores</option>
+						<?php
+						$stores = get_terms( array(
+							'taxonomy' => 'store',
+							'hide_empty' => true,
+						) );
+						foreach ( $stores as $store ) {
+							echo '<option value="' . esc_attr( $store->term_id ) . '">' . esc_html( $store->name ) . '</option>';
+						}
+						?>
+					</select>
+				</div>
+
+				<div class="bt-filter-group">
+					<label for="bt-min-price">Min Price:</label>
+					<input type="number" id="bt-min-price" placeholder="0" min="0" />
+				</div>
+
+				<div class="bt-filter-group">
+					<label for="bt-max-price">Max Price:</label>
+					<input type="number" id="bt-max-price" placeholder="10000" min="0" />
+				</div>
+
+				<div class="bt-filter-group">
+					<button id="bt-apply-filters" class="bt-btn bt-btn-primary">Apply Filters</button>
+					<button id="bt-clear-filters" class="bt-btn bt-btn-secondary">Clear</button>
+				</div>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Render the sidebar filters UI (Amazon-style).
+	 *
+	 * @since 1.0.0
+	 * @return string Sidebar filter HTML.
+	 */
+	public static function render_sidebar_filters() {
+		ob_start();
+		?>
+		<div class="bt-sidebar-filters">
+			<!-- Search -->
+			<div class="bt-filter-panel">
+				<div class="bt-filter-header">
+					<h3>Search</h3>
+				</div>
+				<div class="bt-filter-content">
+					<div class="bt-search-box">
+						<input type="text" id="bt-sidebar-search" placeholder="Search deals..." />
+						<button type="button" id="bt-search-btn">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<circle cx="11" cy="11" r="8"></circle>
+								<path d="m21 21-4.35-4.35"></path>
+							</svg>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Categories -->
+			<div class="bt-filter-panel">
+				<div class="bt-filter-header">
+					<h3>Categories</h3>
+					<button class="bt-filter-toggle" data-target="categories">
+						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="6,9 12,15 18,9"></polyline>
+						</svg>
+					</button>
+				</div>
+				<div class="bt-filter-content bt-filter-categories" id="categories-content">
+					<?php
+					$categories = get_terms([
+						'taxonomy' => 'category',
+						'hide_empty' => true,
+						'number' => 10
+					]);
+
+					if ($categories && !is_wp_error($categories)) {
+						foreach ($categories as $category) {
+							$count = $category->count;
+							echo '<label class="bt-filter-option">';
+							echo '<input type="checkbox" name="bt-category-filter" value="' . esc_attr($category->term_id) . '" />';
+							echo '<span class="bt-option-text">' . esc_html($category->name) . '</span>';
+							echo '<span class="bt-option-count">(' . $count . ')</span>';
+							echo '</label>';
+						}
+					}
+					?>
+				</div>
+			</div>
+
+			<!-- Stores -->
+			<div class="bt-filter-panel">
+				<div class="bt-filter-header">
+					<h3>Stores</h3>
+					<button class="bt-filter-toggle" data-target="stores">
+						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="6,9 12,15 18,9"></polyline>
+						</svg>
+					</button>
+				</div>
+				<div class="bt-filter-content bt-filter-stores" id="stores-content">
+					<?php
+					$stores = get_terms([
+						'taxonomy' => 'store',
+						'hide_empty' => true,
+						'number' => 15
+					]);
+
+					if ($stores && !is_wp_error($stores)) {
+						foreach ($stores as $store) {
+							$count = $store->count;
+							$logo = get_term_meta($store->term_id, 'thumb_image', true);
+							echo '<label class="bt-filter-option bt-store-option">';
+							echo '<input type="checkbox" name="bt-store-filter" value="' . esc_attr($store->term_id) . '" />';
+							if ($logo) {
+								echo '<img src="' . esc_url($logo) . '" alt="' . esc_attr($store->name) . '" class="bt-store-thumb" />';
+							}
+							echo '<span class="bt-option-text">' . esc_html($store->name) . '</span>';
+							echo '<span class="bt-option-count">(' . $count . ')</span>';
+							echo '</label>';
+						}
+					}
+					?>
+				</div>
+			</div>
+
+			<!-- Price Range -->
+			<div class="bt-filter-panel">
+				<div class="bt-filter-header">
+					<h3>Price Range</h3>
+					<button class="bt-filter-toggle" data-target="price">
+						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="6,9 12,15 18,9"></polyline>
+						</svg>
+					</button>
+				</div>
+				<div class="bt-filter-content bt-filter-price" id="price-content">
+					<div class="bt-price-inputs">
+						<div class="bt-price-group">
+							<label for="bt-sidebar-min-price">Min Price</label>
+							<input type="number" id="bt-sidebar-min-price" placeholder="0" min="0" />
+						</div>
+						<div class="bt-price-group">
+							<label for="bt-sidebar-max-price">Max Price</label>
+							<input type="number" id="bt-sidebar-max-price" placeholder="10000" min="0" />
+						</div>
+					</div>
+					<button id="bt-apply-price-filter" class="bt-apply-price-btn">Apply</button>
+				</div>
+			</div>
+
+			<!-- Clear Filters -->
+			<div class="bt-filter-actions">
+				<button id="bt-sidebar-clear-filters" class="bt-clear-all-btn">Clear All Filters</button>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Apply sorting parameters to WP_Query args.
+	 *
+	 * @since 1.0.0
+	 * @param array  $args   Query arguments.
+	 * @param string $sort_by Sort option.
+	 */
+	private function apply_sorting_to_args( &$args, $sort_by ) {
+		switch ( $sort_by ) {
+			case 'date_asc':
+				$args['orderby'] = 'date';
+				$args['order'] = 'ASC';
+				break;
+			case 'price_asc':
+				$args['meta_key'] = '_btdeals_offer_sale_price';
+				$args['orderby'] = 'meta_value_num';
+				$args['order'] = 'ASC';
+				break;
+			case 'price_desc':
+				$args['meta_key'] = '_btdeals_offer_sale_price';
+				$args['orderby'] = 'meta_value_num';
+				$args['order'] = 'DESC';
+				break;
+			case 'discount_desc':
+				$args['meta_key'] = '_btdeals_discount_percent';
+				$args['orderby'] = 'meta_value_num';
+				$args['order'] = 'DESC';
+				break;
+			case 'title_asc':
+				$args['orderby'] = 'title';
+				$args['order'] = 'ASC';
+				break;
+			case 'title_desc':
+				$args['orderby'] = 'title';
+				$args['order'] = 'DESC';
+				break;
+			case 'date_desc':
+			default:
+				$args['orderby'] = 'date';
+				$args['order'] = 'DESC';
+				break;
+		}
 	}
 
 	/**

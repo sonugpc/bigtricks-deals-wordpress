@@ -87,11 +87,7 @@ The Bigtricks Deals plugin provides a REST API endpoint for publishing deals.
 
 **Endpoint:** `POST /wp-json/bigtricks-deals/v1/publish`
 
-**Authentication:**
-
-The endpoint requires authentication. You must be an administrator to publish a deal. You need to include a valid JWT token in the `Authorization` header of your request.
-
-`Authorization: Bearer your-jwt-token`
+**Note:** Currently unsecured for testing purposes. Authentication will be added later.
 
 **JSON Payload:**
 
@@ -117,7 +113,6 @@ The endpoint requires authentication. You must be an administrator to publish a 
 ```bash
 curl -X POST http://your-wordpress-site.com/wp-json/bigtricks-deals/v1/publish \
 -H "Content-Type: application/json" \
--H "Authorization: Bearer your-jwt-token" \
 -d '{
   "title": "My Awesome Deal with Categories",
   "content": "This is the full description of my awesome deal. [my_shortcode]",

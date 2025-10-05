@@ -184,6 +184,16 @@ extract( $deal_data );
                         </div>
                     <?php endif; ?>
 
+                    <!-- Product Features -->
+                    <?php if ( ! empty( $product_feature ) ) : ?>
+                        <div class="bt-product-features">
+                            <h3><?php esc_html_e( 'Product Features', 'bigtricks-deals' ); ?></h3>
+                            <div class="bt-features-content">
+                                <?php echo wp_kses_post( $product_feature ); ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Product Features/Tags -->
                     <?php
                     $tags = get_the_terms( $post_id, 'post_tag' );
