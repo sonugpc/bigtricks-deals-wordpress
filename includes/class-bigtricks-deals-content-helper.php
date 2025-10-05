@@ -46,6 +46,7 @@ class Bigtricks_Deals_Content_Helper {
             'verify_label'          => $meta['_btdeals_verify_label'][0] ?? '',
             'gallery_images'        => maybe_unserialize( $meta['_btdeals_gallery_images'][0] ?? [] ),
             'disclaimer'            => $meta['_btdeals_disclaimer'][0] ?? '',
+            'product_feature'       => $meta['_btdeals_product_feature'][0] ?? '',
         ];
 
         // Calculate discount
@@ -56,6 +57,10 @@ class Bigtricks_Deals_Content_Helper {
         $deal_data['store_name'] = $store_info['name'];
         $deal_data['store_logo'] = $store_info['logo'];
         $deal_data['store_url'] = $store_info['url'];
+
+        // Get categories
+        $categories = get_the_terms( $post_id, 'category' );
+        $deal_data['categories'] = $categories && ! is_wp_error( $categories ) ? $categories : [];
 
         // Fallbacks
         $deal_data['post_id'] = $post_id;
@@ -179,39 +184,45 @@ class Bigtricks_Deals_Content_Helper {
     public static function render_deal_item( $deal_data ) {
         ob_start();
         $post_id = isset( $deal_data['post_id'] ) ? $deal_data['post_id'] : 0;
+
+        // Get time ago
+        $post_date = get_post_time( 'U', true, $post_id );
+        $time_ago = human_time_diff( $post_date, current_time( 'timestamp' ) ) . ' ago';
         ?>
         <article class="bt-deal-card">
-            <?php if ( $deal_data['discount_percent'] > 0 ) : ?>
-                <div class="bt-deal-badge">
-                    <?php echo esc_html( $deal_data['discount_percent'] ); ?>% OFF
-                </div>
-            <?php endif; ?>
-            
+            <div class="bt-deal-badge">
+                <?php if ( ! empty( $deal_data['coupon_code'] ) ) : ?>
+                    <?php echo esc_html( $deal_data['coupon_code'] ); ?>
+                <?php else: ?>
+                    <?php echo esc_html( $time_ago ); ?>
+                <?php endif; ?>
+            </div>
+
             <div class="bt-deal-image">
                 <a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
                     <img src="<?php echo esc_url( $deal_data['thumbnail_url'] ); ?>" alt="<?php echo esc_attr( $deal_data['title'] ); ?>" loading="lazy">
                 </a>
             </div>
-            
+
             <div class="bt-deal-content">
                 <h3 class="bt-deal-title">
                     <a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>"><?php echo esc_html( $deal_data['title'] ); ?></a>
                 </h3>
-                
+
                 <?php if ( ! empty( $deal_data['store_name'] ) && ! empty( $deal_data['store_url'] ) ) : ?>
                     <a href="<?php echo esc_url( $deal_data['store_url'] ); ?>" class="bt-deal-store"><?php echo esc_html( $deal_data['store_name'] ); ?></a>
                 <?php endif; ?>
-                
+
                 <div class="bt-deal-pricing">
                     <?php if ( $deal_data['sale_price'] > 0 ) : ?>
                         <span class="bt-deal-sale-price">₹<?php echo esc_html( number_format( $deal_data['sale_price'] ) ); ?></span>
                     <?php endif; ?>
-                    
+
                     <?php if ( $deal_data['old_price'] > 0 ) : ?>
                         <span class="bt-deal-old-price">₹<?php echo esc_html( number_format( $deal_data['old_price'] ) ); ?></span>
                     <?php endif; ?>
                 </div>
-                
+
                 <div class="bt-deal-actions">
                     <a href="<?php echo esc_url( $deal_data['offer_url'] ); ?>" class="bt-btn bt-btn-primary" target="_blank" rel="noopener">
                         <?php echo esc_html( $deal_data['button_text'] ); ?>

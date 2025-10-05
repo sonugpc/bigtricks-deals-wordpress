@@ -35,7 +35,11 @@ extract( $deal_data );
                                  loading="lazy"
                                  width="600"
                                  height="400">
-                            <?php if ( $discount_percent > 0 ) : ?>
+                            <?php if ( $coupon_code ) : ?>
+                                <div class="bt-discount-badge">
+                                    <?php echo esc_html( $coupon_code ); ?>
+                                </div>
+                            <?php elseif ( $discount_percent > 0 ) : ?>
                                 <div class="bt-discount-badge">
                                     <?php echo esc_html( $discount_percent ); ?>% OFF
                                 </div>
@@ -78,6 +82,14 @@ extract( $deal_data );
                 <!-- Product Info -->
                 <div class="bt-product-info">
                     <h1 class="bt-product-title"><?php echo esc_html( $title ); ?></h1>
+
+                    <!-- Deal Posted Time -->
+                    <div class="bt-deal-posted-time">
+                        <?php
+                        $post_date = get_the_date( 'D, M j, Y g:i A' );
+                        echo esc_html( sprintf( __( 'Posted on %s', 'bigtricks-deals' ), $post_date ) );
+                        ?>
+                    </div>
 
                     <?php if ( $store_name && $store_url ) : ?>
                         <a href="<?php echo esc_url( $store_url ); ?>" class="bt-store-info-link">
@@ -156,13 +168,11 @@ extract( $deal_data );
                     <?php if ( $coupon_code ) : ?>
                         <div class="bt-coupon-section">
                             <div class="bt-coupon-label"><?php esc_html_e( 'Coupon Code:', 'bigtricks-deals' ); ?></div>
-                            <div class="bt-coupon-code-container">
-                                <button class="bt-coupon-reveal" data-coupon="<?php echo esc_attr( $coupon_code ); ?>">
-                                    <?php esc_html_e( 'Click to Reveal Code', 'bigtricks-deals' ); ?>
+                            <div class="bt-coupon-code-display">
+                                <span class="bt-coupon-code"><?php echo esc_html( $coupon_code ); ?></span>
+                                <button class="bt-copy-coupon" data-coupon="<?php echo esc_attr( $coupon_code ); ?>">
+                                    <?php esc_html_e( 'Copy', 'bigtricks-deals' ); ?>
                                 </button>
-                                <div class="bt-coupon-code" style="display: none;">
-                                    <?php echo esc_html( $coupon_code ); ?>
-                                </div>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -259,6 +269,17 @@ extract( $deal_data );
                                 <span class="bt-stat-label"><?php esc_html_e( 'Store:', 'bigtricks-deals' ); ?></span>
                                 <span class="bt-stat-value"><?php echo esc_html( $store_name ?: __( 'Various', 'bigtricks-deals' ) ); ?></span>
                             </div>
+
+                            <?php if ( ! empty( $categories ) ) : ?>
+                                <div class="bt-stat-item">
+                                    <span class="bt-stat-label"><?php esc_html_e( 'Category:', 'bigtricks-deals' ); ?></span>
+                                    <span class="bt-stat-value">
+                                        <a href="<?php echo esc_url( get_term_link( $categories[0] ) ); ?>" class="bt-category-link">
+                                            <?php echo esc_html( $categories[0]->name ); ?>
+                                        </a>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

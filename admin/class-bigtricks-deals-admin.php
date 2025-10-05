@@ -332,6 +332,11 @@ class Bigtricks_Deals_Admin {
 					<p class="description"><?php _e( 'Unique product identifier for API updates and tracking. Meta key: <code>_btdeals_product_id</code>', 'bigtricks-deals' ); ?></p></td>
 				</tr>
 				<tr>
+					<th><label for="btdeals_last_price_updated_at"><?php _e( 'Last Price Updated At', 'bigtricks-deals' ); ?></label></th>
+					<td><input type="datetime-local" id="btdeals_last_price_updated_at" name="btdeals_last_price_updated_at" value="<?php echo esc_attr( $fields['last_price_updated_at'] ?? '' ); ?>" class="regular-text">
+					<p class="description"><?php _e( 'Timestamp when the price was last updated. Meta key: <code>_btdeals_last_price_updated_at</code>', 'bigtricks-deals' ); ?></p></td>
+				</tr>
+				<tr>
 					<th><label><?php _e( 'Shortcode', 'bigtricks-deals' ); ?></label></th>
 					<td><input type="text" readonly value="[quick_offer id="<?php echo $post->ID; ?>"]" class="widefat"></td>
 				</tr>
@@ -460,23 +465,24 @@ class Bigtricks_Deals_Admin {
 		}
 	
 		$meta_fields = [
-			'product_name'        => 'sanitize_text_field',
-			'offer_url'           => 'esc_url_raw',
-			'offer_old_price'     => 'sanitize_text_field',
-			'offer_sale_price'    => 'sanitize_text_field',
-			'coupon_code'         => 'sanitize_text_field',
-			'expiration_date'     => 'sanitize_text_field',
-			'verify_label'        => 'sanitize_text_field',
-			'button_text'         => 'sanitize_text_field',
-			'product_thumbnail_url' => 'esc_url_raw',
-			'offer_thumbnail_url' => 'esc_url_raw',
-			'store'               => 'sanitize_text_field',
-			'brand_logo_url'      => 'esc_url_raw',
-			'discount_tag'        => 'sanitize_text_field',
-			'product_id'          => 'sanitize_text_field',
-			'short_description'   => 'wp_kses_post',
-			'disclaimer'          => 'wp_kses_post',
-			'product_feature'     => 'wp_kses_post',
+			'product_name'           => 'sanitize_text_field',
+			'offer_url'              => 'esc_url_raw',
+			'offer_old_price'        => 'sanitize_text_field',
+			'offer_sale_price'       => 'sanitize_text_field',
+			'coupon_code'            => 'sanitize_text_field',
+			'expiration_date'        => 'sanitize_text_field',
+			'verify_label'           => 'sanitize_text_field',
+			'button_text'            => 'sanitize_text_field',
+			'product_thumbnail_url'  => 'esc_url_raw',
+			'offer_thumbnail_url'    => 'esc_url_raw',
+			'store'                  => 'sanitize_text_field',
+			'brand_logo_url'         => 'esc_url_raw',
+			'discount_tag'           => 'sanitize_text_field',
+			'product_id'             => 'sanitize_text_field',
+			'last_price_updated_at'  => 'sanitize_text_field',
+			'short_description'      => 'wp_kses_post',
+			'disclaimer'             => 'wp_kses_post',
+			'product_feature'        => 'wp_kses_post',
 		];
 	
 		foreach ( $meta_fields as $key => $sanitize_callback ) {
@@ -721,25 +727,26 @@ class Bigtricks_Deals_Admin {
 		}
 
 		$meta_fields_to_sanitize = [
-			'product_name'        => 'sanitize_text_field',
-			'offer_url'           => 'esc_url_raw',
-			'offer_old_price'     => 'sanitize_text_field',
-			'offer_sale_price'    => 'sanitize_text_field',
-			'coupon_code'         => 'sanitize_text_field',
-			'expiration_date'     => 'sanitize_text_field',
-			'verify_label'        => 'sanitize_text_field',
-			'button_text'         => 'sanitize_text_field',
-			'product_thumbnail_url' => 'esc_url_raw',
-			'offer_thumbnail_url' => 'esc_url_raw',
-			'store'               => 'sanitize_text_field',
-			'brand_logo_url'      => 'esc_url_raw',
-			'discount_tag'        => 'sanitize_text_field',
-			'product_id'          => 'sanitize_text_field',
-			'short_description'   => 'wp_kses_post',
-			'disclaimer'          => 'wp_kses_post',
-			'product_feature'     => 'wp_kses_post',
-			'mask_coupon'         => 'sanitize_text_field',
-			'is_expired'          => 'sanitize_text_field',
+			'product_name'           => 'sanitize_text_field',
+			'offer_url'              => 'esc_url_raw',
+			'offer_old_price'        => 'sanitize_text_field',
+			'offer_sale_price'       => 'sanitize_text_field',
+			'coupon_code'            => 'sanitize_text_field',
+			'expiration_date'        => 'sanitize_text_field',
+			'verify_label'           => 'sanitize_text_field',
+			'button_text'            => 'sanitize_text_field',
+			'product_thumbnail_url'  => 'esc_url_raw',
+			'offer_thumbnail_url'    => 'esc_url_raw',
+			'store'                  => 'sanitize_text_field',
+			'brand_logo_url'         => 'esc_url_raw',
+			'discount_tag'           => 'sanitize_text_field',
+			'product_id'             => 'sanitize_text_field',
+			'last_price_updated_at'  => 'sanitize_text_field',
+			'short_description'      => 'wp_kses_post',
+			'disclaimer'             => 'wp_kses_post',
+			'product_feature'        => 'wp_kses_post',
+			'mask_coupon'            => 'sanitize_text_field',
+			'is_expired'             => 'sanitize_text_field',
 		];
 
 		foreach ( $meta_fields_to_sanitize as $field => $sanitize_callback ) {
