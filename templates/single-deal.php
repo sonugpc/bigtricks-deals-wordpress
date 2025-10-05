@@ -23,7 +23,7 @@ extract( $deal_data );
 <main id="main" class="bt-single-deal-container" role="main">
 	<article id="post-<?php the_ID(); ?>" <?php post_class( 'bt-deal-article' ); ?>>
     <!-- Hero Section -->
-    <section class="bt-hero-section">
+    <section class="bt-hero-section bt-hero-compact">
         <div class="bt-container">
             <div class="bt-hero-grid">
                 <!-- Product Images -->
@@ -163,19 +163,6 @@ extract( $deal_data );
                             <?php esc_html_e( 'Share', 'bigtricks-deals' ); ?>
                         </a>
                     </div>
-
-                    <!-- Coupon Code -->
-                    <?php if ( $coupon_code ) : ?>
-                        <div class="bt-coupon-section">
-                            <div class="bt-coupon-label"><?php esc_html_e( 'Coupon Code:', 'bigtricks-deals' ); ?></div>
-                            <div class="bt-coupon-code-display">
-                                <span class="bt-coupon-code"><?php echo esc_html( $coupon_code ); ?></span>
-                                <button class="bt-copy-coupon" data-coupon="<?php echo esc_attr( $coupon_code ); ?>">
-                                    <?php esc_html_e( 'Copy', 'bigtricks-deals' ); ?>
-                                </button>
-                            </div>
-                        </div>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -187,6 +174,19 @@ extract( $deal_data );
             <div class="bt-content-grid">
                 <!-- Main Content -->
                 <div class="bt-main-content">
+                    <!-- Coupon Code (Top of Content) -->
+                    <?php if ( $coupon_code ) : ?>
+                        <div class="bt-coupon-section bt-coupon-top">
+                            <div class="bt-coupon-label"><?php esc_html_e( 'Coupon Code:', 'bigtricks-deals' ); ?></div>
+                            <div class="bt-coupon-code-display">
+                                <span class="bt-coupon-code"><?php echo esc_html( $coupon_code ); ?></span>
+                                <button class="bt-copy-coupon" data-coupon="<?php echo esc_attr( $coupon_code ); ?>">
+                                    <?php esc_html_e( 'Copy', 'bigtricks-deals' ); ?>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if (get_the_content()): ?>
                         <div class="bt-full-description entry-content">
                             <h2><?php esc_html_e( 'Offer Details', 'bigtricks-deals' ); ?></h2>
@@ -349,6 +349,22 @@ extract( $deal_data );
             <?php echo esc_html( $button_text ); ?>
         </a>
     </div>
+
+    <!-- Global Deal Disclaimer -->
+    <section class="bt-global-disclaimer">
+        <div class="bt-container">
+            <div class="bt-global-disclaimer-content">
+                <p class="bt-global-disclaimer-text">
+                    <small><em><strong>
+                        Please note that most of the deals stay for a very short duration of few minutes to few hours. The price shown above is the deal price and may have changed on the shop website since. To ensure that you get the most out of these deals, please join our
+                        <a href="/visit/?store=tg_chanel" target="_blank" rel="noopener">telegram channel</a> /
+                        <a href="/visit/?store=wa_channel" target="_blank" rel="noopener">Whatsapp channel</a> or
+                        <a href="/visit/?store=bigtricks_app" target="_blank" rel="noopener">download bigtricks.in app</a>
+                    </strong></em></small>
+                </p>
+            </div>
+        </div>
+    </section>
 </main>
 
 <?php get_footer(); ?>

@@ -64,6 +64,8 @@ class Bigtricks_Deals_Content_Helper {
 
         // Fallbacks
         $deal_data['post_id'] = $post_id;
+        $deal_data['post_date'] = $post->post_date;
+        $deal_data['post_date_gmt'] = $post->post_date_gmt;
         $deal_data['title'] = ! empty( $deal_data['product_name'] ) ? $deal_data['product_name'] : $post->post_title;
         $deal_data['description'] = ! empty( $deal_data['short_description'] ) ? $deal_data['short_description'] : $post->post_excerpt;
         $deal_data['button_text'] = ! empty( $deal_data['button_text'] ) ? $deal_data['button_text'] : __( 'Get Deal', 'bigtricks-deals' );
@@ -185,8 +187,8 @@ class Bigtricks_Deals_Content_Helper {
         ob_start();
         $post_id = isset( $deal_data['post_id'] ) ? $deal_data['post_id'] : 0;
 
-        // Get time ago
-        $post_date = get_post_time( 'U', true, $post_id );
+        // Get time ago from cached data
+        $post_date = isset( $deal_data['post_date_gmt'] ) ? strtotime( $deal_data['post_date_gmt'] ) : time();
         $time_ago = human_time_diff( $post_date, current_time( 'timestamp' ) ) . ' ago';
         ?>
         <article class="bt-deal-card">
