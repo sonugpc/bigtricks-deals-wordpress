@@ -104,6 +104,7 @@ class Bigtricks_Deals_Public {
 			'store'       => '',
 			'count'       => 12,
 			'show_filters' => 'false',
+			'same_day'    => 'false',
 		), $atts, 'loot-deals' );
 
 		// Enqueue archive script if filters are enabled
@@ -144,6 +145,17 @@ class Bigtricks_Deals_Public {
 
 		if ( count( $tax_query ) > 1 ) {
 			$args['tax_query'] = $tax_query;
+		}
+
+		// Filter by same day if requested
+		if ( 'true' === $atts['same_day'] ) {
+			$args['date_query'] = array(
+				array(
+					'year'  => date( 'Y' ),
+					'month' => date( 'm' ),
+					'day'   => date( 'd' ),
+				),
+			);
 		}
 
 		$deals_query = new WP_Query( $args );

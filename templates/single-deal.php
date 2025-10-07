@@ -32,9 +32,9 @@ extract( $deal_data );
                         <div class="bt-main-image">
                             <img src="<?php echo esc_url( $thumbnail_url ); ?>"
                                  alt="<?php echo esc_attr( $title ); ?>"
-                                 loading="lazy"
-                                 width="600"
-                                 height="400">
+                                 loading="eager"
+                                 width="500"
+                                 height="300">
                             <?php if ( $coupon_code ) : ?>
                                 <div class="bt-discount-badge">
                                     <?php echo esc_html( $coupon_code ); ?>
@@ -106,20 +106,94 @@ extract( $deal_data );
                         </a>
                     <?php endif; ?>
 
-                    <!-- Pricing -->
-                    <div class="bt-pricing-section">
-                        <div class="bt-price-row">
-                            <?php if ( $sale_price > 0 ) : ?>
-                                <span class="bt-sale-price"><?php echo esc_html( '₹' . number_format( $sale_price, 2 ) ); ?></span>
-                            <?php endif; ?>
+                    <!-- Top CTA Section -->
+                    <div class="bt-top-cta-section">
+                        <div class="bt-cta-content">
+                            <!-- Left Side - Pricing Info -->
+                            <div class="bt-pricing-info">
+                                <?php if ( $old_price > 0 ) : ?>
+                                    <div class="bt-mrp">MRP: ₹<?php echo esc_html( number_format( $old_price, 2 ) ); ?></div>
+                                <?php endif; ?>
 
-                            <?php if ( $old_price > 0 ) : ?>
-                                <span class="bt-old-price"><?php echo esc_html( '₹' . number_format( $old_price, 2 ) ); ?></span>
-                            <?php endif; ?>
+                                <div class="bt-offer-row">
+                                    <span class="bt-offer-label">OFFER:</span>
+                                    <?php if ( $sale_price > 0 ) : ?>
+                                        <div class="bt-offer-price-container">
+                                            <span class="bt-offer-price">₹<?php echo esc_html( number_format( $sale_price, 2 ) ); ?></span>
+                                                                                       <span class="bt-discount-percent"><?php echo esc_html( $discount_percent ); ?>% Off</span>
 
-                            <?php if ( $discount_percent > 0 ) : ?>
-                                <span class="bt-discount-percent"><?php echo esc_html( $discount_percent ); ?>% off</span>
-                            <?php endif; ?>
+                                            <div class="bt-price-info-wrapper">
+                                                <button class="bt-price-info-btn" type="button" aria-label="Price Information">
+                                                    <span>ℹ</span>
+                                                </button>
+                                                
+                                                <div class="bt-price-tooltip">
+                                                    <div class="bt-tooltip-header">
+                                                        <strong>Price Information</strong>
+                                                    </div>
+                                                    <div class="bt-tooltip-content">
+                                                        <p><strong>Price as of:</strong> <?php echo esc_html( get_the_date( 'M j, Y \a\t g:i A' ) ); ?></p>
+                                                        <p>Product prices and availability are accurate as of the date/time indicated and are subject to change.</p>
+                                                        <p>Any price and availability information displayed on <?php echo esc_html( $store_name ?: 'the Store' ); ?> at the time of purchase will apply to the purchase of this product.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ( $discount_percent > 0 ) : ?>
+                                        <span class="bt-discount-info">
+                                            <?php if ( $old_price > 0 && $sale_price > 0 ) : ?>
+                                                <?php if ( ! empty( $coupon_code ) ) : ?>
+                                                    <span class="bt-savings bt-savings-special"> <?php echo esc_html( $coupon_code ); ?> to save ₹<?php echo esc_html( number_format( $old_price - $sale_price, 2 ) ); ?></span>
+                                                <?php else : ?>
+                                                    <span class="bt-savings bt-savings-default">✨ You successfully saved ₹<?php echo esc_html( number_format( $old_price - $sale_price, 2 ) ); ?>!</span>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <!-- Right Side - CTA Button -->
+                            <div class="">
+                                <?php if ( $offer_url ) : ?>
+                                    <?php
+                                    $store_name_for_button = !empty($store_name) ? $store_name : 'Store';
+                                    $button_text_with_store = sprintf(__('Shop on %s', 'bigtricks-deals'), $store_name_for_button);
+                                    ?>
+                                    <a href="<?php echo esc_url( $offer_url ); ?>"
+                                       class="bt-buy-now-btn"
+                                       target="_blank"
+                                       rel="nofollow noopener">
+                                        <i class="rbi rbi-shopping-bag"></i> <?php echo esc_html( $button_text_with_store ); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Social Share Buttons -->
+                        <div class="bt-social-cta-section">
+                            <div class="bt-social-buttons">
+                                <button class="bt-social-btn bt-copy-btn" data-url="<?php echo esc_url( get_permalink() ); ?>" title="Copy Link">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                </button>
+                                <button class="bt-social-btn bt-whatsapp-btn" data-url="<?php echo esc_url( get_permalink() ); ?>" data-title="<?php echo esc_attr( $title ); ?>" title="Share on WhatsApp">
+                                    <i class="rbi rbi-whatsapp"></i>
+                                </button>
+                                <button class="bt-social-btn bt-facebook-btn" data-url="<?php echo esc_url( get_permalink() ); ?>" title="Share on Facebook">
+                                    <i class="rbi rbi-facebook"></i>
+                                </button>
+                                <button class="bt-social-btn bt-twitter-btn" data-url="<?php echo esc_url( get_permalink() ); ?>" data-title="<?php echo esc_attr( $title ); ?>" title="Share on Twitter">
+                                    <i class="rbi rbi-twitter"></i>
+                                </button>
+                                <button class="bt-social-btn bt-telegram-btn" data-url="<?php echo esc_url( get_permalink() ); ?>" data-title="<?php echo esc_attr( $title ); ?>" title="Share on Telegram">
+                                    <i class="rbi rbi-telegram"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <?php if ( $expiry_date ) : ?>
@@ -145,23 +219,6 @@ extract( $deal_data );
                                 </div>
                             </div>
                         <?php endif; ?>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="bt-action-buttons">
-                        <?php if ( $offer_url ) : ?>
-                            <a href="<?php echo esc_url( $offer_url ); ?>"
-                               class="bt-primary-btn is-btn"
-                               target="_blank"
-                               rel="nofollow noopener">
-                                <?php echo esc_html( $button_text ); ?>
-                            </a>
-                        <?php endif; ?>
-
-                        <a href="#" class="bt-share-trigger is-btn">
-                            <i class="rbi rbi-share"></i>
-                            <?php esc_html_e( 'Share', 'bigtricks-deals' ); ?>
-                        </a>
                     </div>
                 </div>
             </div>
@@ -294,12 +351,7 @@ extract( $deal_data );
                 <h2 class="bt-section-title"><?php esc_html_e( 'Similar Deals', 'bigtricks-deals' ); ?></h2>
                 <a href="<?php echo esc_url( get_post_type_archive_link( 'deal' ) ); ?>" class="bt-view-all-link"><?php esc_html_e( 'View All', 'bigtricks-deals' ); ?> <i class="rbi rbi-arrow-right"></i></a>
             </div>
-            <div id="btSimilarDealsGrid" class="bt-deals-grid">
-                <div class="bt-loading-similar">
-                    <div class="bt-spinner"></div>
-                    <p><?php esc_html_e( 'Loading similar deals...', 'bigtricks-deals' ); ?></p>
-                </div>
-            </div>
+            <?php echo do_shortcode( '[loot-deals count="5" same_day="true"]' ); ?>
         </div>
     </section>
 
@@ -346,7 +398,7 @@ extract( $deal_data );
             <span><?php esc_html_e( 'Share', 'bigtricks-deals' ); ?></span>
         </a>
         <a href="<?php echo esc_url( $offer_url ); ?>" class="bt-sticky-get-deal is-btn" target="_blank" rel="nofollow noopener">
-            <?php echo esc_html( $button_text ); ?>
+            <?php echo esc_html( $button_text_with_store ); ?>
         </a>
     </div>
 

@@ -6,26 +6,22 @@
     'use strict';
 
     const DealPage = {
-        // Configuration
-        config: {
-            similarDealsCount: 5,
-        },
-
-        // State
-        state: {
-            isLoading: false,
-        },
-
         // Initialize the script
         init: function() {
             this.bindEvents();
-            this.loadSimilarDeals();
         },
 
         // Bind all event listeners
         bindEvents: function() {
             $('.bt-single-deal-container').on('click', '.bt-coupon-reveal', this.handleCouponReveal.bind(this));
             $('.bt-single-deal-container').on('click', '.bt-share-trigger, .bt-share-trigger-mobile', this.handleShareTrigger.bind(this));
+
+            // New social sharing buttons
+            $('.bt-single-deal-container').on('click', '.bt-copy-btn', this.handleCopyLink.bind(this));
+            $('.bt-single-deal-container').on('click', '.bt-whatsapp-btn', this.handleWhatsAppShare.bind(this));
+            $('.bt-single-deal-container').on('click', '.bt-facebook-btn', this.handleFacebookShare.bind(this));
+            $('.bt-single-deal-container').on('click', '.bt-twitter-btn', this.handleTwitterShare.bind(this));
+            $('.bt-single-deal-container').on('click', '.bt-telegram-btn', this.handleTelegramShare.bind(this));
         },
 
         handleShareTrigger: function(e) {
@@ -47,56 +43,57 @@
             }
         },
 
-        // Similar Deals Logic
-        loadSimilarDeals: function() {
-            if (this.state.isLoading) return;
-            this.state.isLoading = true;
-            $('.bt-loading-similar').show();
-
-            $.ajax({
-                url: btDealsAjax.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'bt_get_similar_deals',
-                    nonce: btDealsAjax.nonce,
-                    deal_id: btDealsAjax.postId,
-                    limit: this.config.similarDealsCount
-                },
-                success: (response) => {
-                    if (response.success && response.data.length > 0) {
-                        this.renderSimilarDeals(response.data);
-                    } else {
-                        console.error('No similar deals found.');
-                    }
-                },
-                error: () => console.error('Failed to load similar deals.'),
-                complete: () => {
-                    this.state.isLoading = false;
-                    $('.bt-loading-similar').hide();
-                }
-            });
+        // New social sharing handlers
+        handleCopyLink: function(e) {
+            e.preventDefault();
+            const url = $(e.currentTarget).data('url');
+            this.copyToClipboard(url);
+            this.showToast('Link copied to clipboard!');
         },
 
-        renderSimilarDeals: function(deals) {
-            const $grid = $('#btSimilarDealsGrid');
-            $grid.empty();
-            deals.forEach((deal, index) => {
-                $grid.append(this.createDealItem(deal, index));
-            });
+        handleWhatsAppShare: function(e) {
+            e.preventDefault();
+            const url = $(e.currentTarget).data('url');
+            const title = $(e.currentTarget).data('title');
+            const text = `🔥 ${title} - Check out this amazing deal! ${url}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(whatsappUrl, '_blank', 'width=600,height=400');
         },
 
-        createDealItem: function(deal, index) {
-            const imageUrl = deal.thumbnail || 'https://via.placeholder.com/280x160?text=No+Image';
-            return `
-                <div class="deal-item" style="animation-delay: ${index * 0.1}s">
-                    <img src="${imageUrl}" alt="${deal.title}" class="deal-item-image" loading="lazy" width="280" height="160">
-                    <h4 class="deal-item-title">${deal.title}</h4>
-                    <div class="deal-item-price">₹${deal.sale_price}</div>
-                    <div class="deal-item-store">${deal.store_name || 'Store'}</div>
-                    <a href="${deal.offer_url}" class="deal-item-btn is-btn" target="_blank" rel="nofollow noopener" data-deal-id="${deal.id}">Get Deal</a>
-                </div>
-            `;
+        handleFacebookShare: function(e) {
+            e.preventDefault();
+            const url = $(e.currentTarget).data('url');
+            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            window.open(facebookUrl, '_blank', 'width=600,height=400');
         },
+
+        handleTwitterShare: function(e) {
+            e.preventDefault();
+            const url = $(e.currentTarget).data('url');
+            const title = $(e.currentTarget).data('title');
+            const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+            window.open(twitterUrl, '_blank', 'width=600,height=400');
+        },
+
+        handleTelegramShare: function(e) {
+            e.preventDefault();
+            const url = $(e.currentTarget).data('url');
+            const title = $(e.currentTarget).data('title');
+            const text = `🔥 ${title} - Check out this amazing deal!`;
+            const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+            window.open(telegramUrl, '_blank', 'width=600,height=400');
+        },
+
+        showToast: function(message) {
+            // Simple toast notification
+            const toast = $(`<div class="bt-toast">${message}</div>`);
+            $('body').append(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        },
+
+
 
         // Share Functionality
         showShareModal: function(url, title, text) {

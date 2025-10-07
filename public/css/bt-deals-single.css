@@ -32,10 +32,10 @@
     --bt-radius-lg: 0.75rem;
     --bt-radius-xl: 1rem;
 
-    --bt-container-max: 1200px;
+    --bt-container-max: 1250px;
     --bt-spacing-xs: 0.25rem;
     --bt-spacing-sm: 0.5rem;
-    --bt-spacing: 0.75rem;
+    --bt-spacing: 0.25rem;
     --bt-spacing-lg: 1rem;
     --bt-spacing-xl: 1.5rem;
     --bt-spacing-2xl: 2rem;
@@ -79,7 +79,6 @@
     position: relative;
     border-radius: var(--bt-radius-lg);
     overflow: hidden;
-    box-shadow: var(--bt-shadow-lg);
     background: var(--bt-bg-primary);
 }
 
@@ -155,7 +154,7 @@
 }
 
 .bt-product-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.2;
     color: var(--bt-text-primary);
@@ -163,7 +162,362 @@
     word-break: break-word;
 }
 
-/* Pricing Section */
+/* Top CTA Section */
+
+
+.bt-cta-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--bt-spacing-xl);
+    margin-bottom: var(--bt-spacing-lg);
+}
+
+.bt-pricing-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--bt-spacing-sm);
+}
+
+.bt-mrp {
+    font-size: 0.875rem;
+    color: var(--bt-text-secondary);
+    font-weight: 500;
+}
+
+.bt-offer-row {
+    display: flex;
+    align-items: center;
+    gap: var(--bt-spacing);
+    flex-wrap: wrap;
+}
+
+.bt-offer-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--bt-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bt-offer-price-container {
+    display: flex;
+    align-items: center;
+    gap: var(--bt-spacing-xs);
+}
+
+.bt-offer-price {
+    font-size: 1.5625rem;
+    font-weight: 700;
+    color: var(--bt-primary);
+}
+
+.bt-price-info-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: var(--bt-text-secondary);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: help;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 0;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.bt-price-info-btn:hover {
+    background: var(--bt-primary);
+    transform: scale(1.1);
+}
+
+.bt-price-info-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.bt-price-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bt-bg-primary);
+    border: 1px solid var(--bt-border);
+    border-radius: var(--bt-radius);
+    box-shadow: var(--bt-shadow-lg);
+    padding: var(--bt-spacing);
+    min-width: 280px;
+    max-width: 350px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    margin-top: var(--bt-spacing-xs);
+}
+
+.bt-price-info-wrapper:hover .bt-price-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.bt-tooltip-header {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--bt-text-primary);
+    margin-bottom: var(--bt-spacing-sm);
+    padding-bottom: var(--bt-spacing-xs);
+    border-bottom: 1px solid var(--bt-border);
+}
+
+.bt-tooltip-content {
+    font-size: 0.75rem;
+    color: var(--bt-text-secondary);
+    line-height: 1.4;
+}
+
+.bt-tooltip-content p {
+    margin: 0 0 var(--bt-spacing-xs) 0;
+}
+
+.bt-tooltip-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Arrow pointer for tooltip */
+.bt-price-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--bt-border);
+}
+
+.bt-price-tooltip::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid var(--bt-bg-primary);
+}
+
+.bt-discount-info {
+    display: flex;
+    align-items: center;
+    gap: var(--bt-spacing-sm);
+    flex-wrap: wrap;
+}
+
+.bt-discount-percent {
+    background: var(--bt-success);
+    color: white;
+    padding: var(--bt-spacing-xs) var(--bt-spacing-sm);
+    border-radius: var(--bt-radius);
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.bt-savings {
+    font-size: 0.875rem;
+    color: var(--bt-success);
+    font-weight: 600;
+}
+
+.bt-savings-special {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    color: var(--bt-success);
+    font-weight: 700;
+    border-radius: 0.375rem;
+    display: inline-block;
+}
+
+.bt-savings-default {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-radius: 0.375rem;
+    display: inline-block;
+    font-weight: 600;
+}
+
+@keyframes lightPulse {
+    0%, 100% {
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06);
+    }
+    50% {
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2), 0 2px 4px -1px rgba(16, 185, 129, 0.12), 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+}
+
+.bt-cta-button {
+    flex-shrink: 0;
+}
+
+.bt-buy-now-btn {
+    background: var(--bt-primary);
+    color: white;
+    padding: var(--bt-spacing) var(--bt-spacing-xl);
+    border-radius: var(--bt-radius);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--bt-spacing-sm);
+    box-shadow: var(--bt-shadow);
+    border: 2px solid var(--bt-primary);
+    min-width: 180px;
+    min-height: 48px;
+    white-space: nowrap;
+}
+
+.bt-buy-now-btn:hover {
+    background: var(--bt-primary-hover);
+    border-color: var(--bt-primary-hover);
+}
+
+/* Social CTA Section */
+.bt-social-cta-section {
+    border-top: 1px solid var(--bt-border);
+    padding-top: var(--bt-spacing-lg);
+}
+
+.bt-social-buttons {
+    display: flex;
+    gap: var(--bt-spacing-sm);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.bt-social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--bt-bg-primary);
+    border: 2px solid var(--bt-border);
+    border-radius: 50%;
+    color: var(--bt-text-secondary);
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--bt-shadow-sm);
+}
+
+.bt-social-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--bt-shadow-lg);
+    border-color: currentColor;
+}
+
+.bt-social-btn i {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+/* Copy Link Button */
+.bt-copy-btn {
+    color: var(--bt-secondary);
+}
+
+.bt-copy-btn:hover {
+    background: var(--bt-success);
+    color: white;
+    border-color: var(--bt-success);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* WhatsApp Button */
+.bt-whatsapp-btn {
+    color: #25D366;
+}
+
+.bt-whatsapp-btn:hover {
+    background: #25D366;
+    color: white;
+    border-color: #25D366;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+/* Facebook Button */
+.bt-facebook-btn {
+    color: #1877F2;
+}
+
+.bt-facebook-btn:hover {
+    background: #1877F2;
+    color: white;
+    border-color: #1877F2;
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
+/* Twitter Button */
+.bt-twitter-btn {
+    color: #1DA1F2;
+}
+
+.bt-twitter-btn:hover {
+    background: #1DA1F2;
+    color: white;
+    border-color: #1DA1F2;
+    box-shadow: 0 4px 12px rgba(29, 161, 242, 0.3);
+}
+
+/* Telegram Button */
+.bt-telegram-btn {
+    color: #0088cc;
+}
+
+.bt-telegram-btn:hover {
+    background: #0088cc;
+    color: white;
+    border-color: #0088cc;
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+}
+
+/* Toast Notification */
+.bt-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--bt-success);
+    color: white;
+    padding: var(--bt-spacing) var(--bt-spacing-lg);
+    border-radius: var(--bt-radius);
+    box-shadow: var(--bt-shadow-lg);
+    z-index: 1001;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Legacy Pricing Section (for backward compatibility) */
 .bt-pricing-section {
     background: var(--bt-bg-primary);
     padding: var(--bt-spacing-lg);
@@ -719,7 +1073,7 @@
 
 @media (max-width: 768px) {
     .bt-product-title {
-        font-size: 1.5rem;
+        font-size: 1rem;
     }
 
     .bt-sale-price {
@@ -729,6 +1083,69 @@
     .bt-action-buttons {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .bt-cta-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--bt-spacing-lg);
+    }
+
+    .bt-pricing-info {
+        text-align: center;
+    }
+
+    .bt-offer-price {
+        font-size: 1.125rem;
+    }
+
+    .bt-cta-button {
+        text-align: center;
+    }
+
+    .bt-buy-now-btn {
+        min-width: auto;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .bt-social-buttons {
+        justify-content: space-between;
+        gap: 1px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .bt-social-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.875rem;
+    }
+
+    .bt-social-btn i {
+        font-size: 0.875rem;
+    }
+
+    .bt-social-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Mobile tooltip adjustments */
+    .bt-price-tooltip {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 280px;
+        max-width: calc(100vw - 2rem);
+        margin: 0;
+        z-index: 1001;
+    }
+
+    .bt-price-info-wrapper:hover .bt-price-tooltip {
+        opacity: 1;
+        visibility: visible;
     }
 }
 
