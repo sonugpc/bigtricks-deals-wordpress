@@ -12,6 +12,9 @@ if ( ! class_exists( 'Bigtricks_Deals_Content_Helper' ) ) {
 
 get_header();
 
+// Ensure grid styles are loaded for similar deals section
+Bigtricks_Deals_Content_Helper::ensure_grid_styles_loaded();
+
 $post_id   = get_the_ID();
 $deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( $post_id );
 
@@ -42,6 +45,12 @@ extract( $deal_data );
                             <?php elseif ( $discount_percent > 0 ) : ?>
                                 <div class="bt-discount-badge">
                                     <?php echo esc_html( $discount_percent ); ?>% OFF
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if ( ! empty( $discount_tag ) ) : ?>
+                                <div class="bt-product-tag">
+                                    <?php echo esc_html( $discount_tag ); ?>
                                 </div>
                             <?php endif; ?>
 
@@ -351,7 +360,67 @@ extract( $deal_data );
                 <h2 class="bt-section-title"><?php esc_html_e( 'Similar Deals', 'bigtricks-deals' ); ?></h2>
                 <a href="<?php echo esc_url( get_post_type_archive_link( 'deal' ) ); ?>" class="bt-view-all-link"><?php esc_html_e( 'View All', 'bigtricks-deals' ); ?> <i class="rbi rbi-arrow-right"></i></a>
             </div>
-            <?php echo do_shortcode( '[loot-deals count="5" same_day="true"]' ); ?>
+            <div id="bt-similar-deals-container">
+                <?php
+                // Get similar deals based on current deal's categories and stores
+                $current_stores = wp_get_post_terms( $post_id, 'store', array( 'fields' => 'ids' ) );
+                $current_categories = wp_get_post_terms( $post_id, 'category', array( 'fields' => 'ids' ) );
+
+                $similar_args = array(
+                    'post_type'      => 'deal',
+                    'post_status'    => 'publish',
+                    'posts_per_page' => 4,
+                    'post__not_in'   => array( $post_id ),
+                    'meta_query'     => array(
+                        'relation' => 'OR',
+                        array(
+                            'key'     => '_btdeals_is_expired',
+                            'value'   => 'off',
+                            'compare' => '=',
+                        ),
+                        array(
+                            'key'     => '_btdeals_is_expired',
+                            'compare' => 'NOT EXISTS',
+                        ),
+                    ),
+                );
+
+                if ( ! empty( $current_stores ) || ! empty( $current_categories ) ) {
+                    $tax_query = array( 'relation' => 'OR' );
+                    if ( ! empty( $current_stores ) ) {
+                        $tax_query[] = array(
+                            'taxonomy' => 'store',
+                            'field'    => 'term_id',
+                            'terms'    => $current_stores,
+                        );
+                    }
+                    if ( ! empty( $current_categories ) ) {
+                        $tax_query[] = array(
+                            'taxonomy' => 'category',
+                            'field'    => 'term_id',
+                            'terms'    => $current_categories,
+                        );
+                    }
+                    $similar_args['tax_query'] = $tax_query;
+                }
+
+                $similar_query = new WP_Query( $similar_args );
+
+                if ( $similar_query->have_posts() ) {
+                    echo '<div class="bt-grid bt-grid-3 bt-deals-grid">';
+                    while ( $similar_query->have_posts() ) {
+                        $similar_query->the_post();
+                        $similar_deal_data = Bigtricks_Deals_Content_Helper::get_deal_data( get_the_ID() );
+                        echo Bigtricks_Deals_Content_Helper::render_deal_item( $similar_deal_data );
+                    }
+                    echo '</div>';
+                    wp_reset_postdata();
+                } else {
+                    // Fallback: show recent deals if no similar deals found
+                    echo do_shortcode( '[loot-deals count="4"]' );
+                }
+                ?>
+            </div>
         </div>
     </section>
 

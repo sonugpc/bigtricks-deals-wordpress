@@ -84,10 +84,15 @@ wp_enqueue_style( 'bt-deals-archive', plugin_dir_url( __FILE__ ) . '../public/cs
 
                 <div class="bt-categories-grid">
                     <?php
+                    // Get the "Loot Deals" parent category
+                    $loot_deals_parent = get_term_by('slug', 'loot-deals', 'category');
+                    $parent_id = $loot_deals_parent ? $loot_deals_parent->term_id : 0;
+
                     $categories = get_terms([
                         'taxonomy' => 'category',
                         'hide_empty' => true,
-                        'number' => 8
+                        'number' => 8,
+                        'parent' => $parent_id
                     ]);
 
                     if ($categories && !is_wp_error($categories)) {

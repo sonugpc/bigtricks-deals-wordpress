@@ -52,50 +52,7 @@ class Bigtricks_Deals_Admin {
 		$this->version     = $version;
 
 	}
-
-	/**
-	 * Register the "Deal" custom post type.
-	 *
-	 * @since 1.0.0
-	 */
-	public function register_deal_cpt() {
-		$labels = [
-			"name" => __( "Deals", "custom-post-type-ui" ),
-			"singular_name" => __( "Deal", "custom-post-type-ui" ),
-			"all_items" => __( "Loot Deals", "custom-post-type-ui" ),
-			"add_new_item" => __( "Add New Deal", "custom-post-type-ui" ),
-			"edit_item" => __( "Edit Deal", "custom-post-type-ui" ),
-		];
-	
-		$args = [
-			"label" => __( "Deals", "custom-post-type-ui" ),
-			"labels" => $labels,
-			"description" => "",
-			"public" => true,
-			"publicly_queryable" => true,
-			"show_ui" => true,
-			"show_in_rest" => true,
-			"rest_base" => "deals",
-			"rest_controller_class" => "WP_REST_Posts_Controller",
-			"has_archive" => "deals",
-			"show_in_menu" => true,
-			"show_in_nav_menus" => true,
-			"delete_with_user" => false,
-			"exclude_from_search" => false,
-			"capability_type" => "post",
-			"map_meta_cap" => true,
-			"hierarchical" => false,
-			"rewrite" => [ "slug" => "deal", "with_front" => true ],
-			"query_var" => true,
-			"menu_icon" => "dashicons-cart",
-			"supports" => [ "title", "editor", "thumbnail", "custom-fields", "comments" ],	
-			"taxonomies" => [ "category", "store" ],
-		];
-	
-		register_post_type( "deal", $args );
-	}
-
-	/**
+/**
 	 * Register the "Store" custom taxonomy.
 	 *
 	 * @since 1.0.0
@@ -142,6 +99,127 @@ class Bigtricks_Deals_Admin {
 			"show_in_quick_edit" => true,
 		];
 		register_taxonomy( "store", [ "deal", "post" ], $args );
+	}
+	/**
+	 * Register the "Deal" custom post type.
+	 *
+	 * @since 1.0.0
+	 */
+	public function register_deal_cpt() {
+		$labels = [
+			"name" => __( "Deals", "custom-post-type-ui" ),
+			"singular_name" => __( "Deal", "custom-post-type-ui" ),
+			"all_items" => __( "Loot Deals", "custom-post-type-ui" ),
+			"add_new_item" => __( "Add New Deal", "custom-post-type-ui" ),
+			"edit_item" => __( "Edit Deal", "custom-post-type-ui" ),
+		];
+	
+		$args = [
+			"label" => __( "Deals", "custom-post-type-ui" ),
+			"labels" => $labels,
+			"description" => "",
+			"public" => true,
+			"publicly_queryable" => true,
+			"show_ui" => true,
+			"show_in_rest" => true,
+			"rest_base" => "deals",
+			"rest_controller_class" => "WP_REST_Posts_Controller",
+			"has_archive" => "deals",
+			"show_in_menu" => true,
+			"show_in_nav_menus" => true,
+			"delete_with_user" => false,
+			"exclude_from_search" => false,
+			"capability_type" => "post",
+			"map_meta_cap" => true,
+			"hierarchical" => false,
+			"rewrite" => [ "slug" => "deal", "with_front" => true ],
+			"query_var" => true,
+			"menu_icon" => "dashicons-cart",
+			"supports" => [ "title", "editor", "thumbnail", "custom-fields", "comments" ],	
+			"taxonomies" => [ "category", "store" ],
+		];
+	
+		register_post_type( "deal", $args );
+	}
+
+	/**
+	 * Create Loot Deals categories under the default category taxonomy.
+	 *
+	 * @since 1.0.0
+	 */
+	public function create_loot_deals_categories() {
+		// Create parent category "Loot Deals" if it doesn't exist
+		$parent_category = get_term_by('name', 'Loot Deals', 'category');
+		if (!$parent_category) {
+			$parent_category = wp_insert_term('Loot Deals', 'category', array(
+				'description' => 'Main category for all deal categories',
+				'slug' => 'loot-deals'
+			));
+			if (is_wp_error($parent_category)) {
+				return;
+			}
+			$parent_id = $parent_category['term_id'];
+		} else {
+			$parent_id = $parent_category->term_id;
+		}
+
+		// Create child categories under "Loot Deals"
+		$categories = [
+			'Electronics',
+			'Mobiles',
+			'Laptops',
+			'Tablets',
+			'Headphones',
+			'Speakers',
+			'Smartwatches',
+			'Cameras',
+			'Gaming',
+			'Home Appliances',
+			'Kitchen Appliances',
+			'Refrigerators',
+			'Washing Machines',
+			'Air Conditioners',
+			'TVs',
+			'Furniture',
+			'Home Decor',
+			'Fashion',
+			'Men\'s Clothing',
+			'Women\'s Clothing',
+			'Shoes',
+			'Bags',
+			'Jewelry',
+			'Watches',
+			'Beauty',
+			'Skincare',
+			'Makeup',
+			'Hair Care',
+			'Health',
+			'Fitness',
+			'Sports',
+			'Books',
+			'Stationery',
+			'Toys',
+			'Baby Products',
+			'Automotive',
+			'Tools',
+			'Garden',
+			'Pet Supplies',
+			'Grocery',
+			'Beverages',
+			'Snacks',
+			'Travel',
+			'Luggage',
+			'Hotels',
+			'Flights'
+		];
+
+		foreach ( $categories as $category ) {
+			if ( ! term_exists( $category, 'category' ) ) {
+				wp_insert_term( $category, 'category', array(
+					'parent' => $parent_id
+				) );
+			}
+		}
 	}
 
 	/**
@@ -322,9 +400,9 @@ class Bigtricks_Deals_Admin {
 					</td>
 				</tr>
 				<tr>
-					<th><label for="btdeals_discount_tag"><?php _e( 'Discount Tag', 'bigtricks-deals' ); ?></label></th>
-					<td><input type="text" id="btdeals_discount_tag" name="btdeals_discount_tag" value="<?php echo esc_attr( $fields['discount_tag'] ); ?>" class="regular-text" maxlength="5">
-					<p class="description"><?php _e( 'Max 5 symbols. E.g., $20 or 50%. Meta key: _btdeals_discount_tag', 'bigtricks-deals' ); ?></p></td>
+					<th><label for="btdeals_discount_tag"><?php _e( 'Product Tag', 'bigtricks-deals' ); ?></label></th>
+					<td><input type="text" id="btdeals_discount_tag" name="btdeals_discount_tag" value="<?php echo esc_attr( $fields['discount_tag'] ); ?>" class="regular-text" maxlength="10">
+					<p class="description"><?php _e( 'Tag displayed on product image. E.g., "BBD Sale", "Flash Deal". Meta key: _btdeals_discount_tag', 'bigtricks-deals' ); ?></p></td>
 				</tr>
 				<tr>
 					<th><label for="btdeals_product_id"><?php _e( 'Product ID', 'bigtricks-deals' ); ?></label></th>

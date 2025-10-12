@@ -96,8 +96,8 @@ class Bigtricks_Deals_Public {
 	 * @return string Shortcode output.
 	 */
 	public function render_loot_deals_archive_shortcode( $atts ) {
-		// Enqueue the grid stylesheet.
-		wp_enqueue_style( 'bt-deals-grid', plugin_dir_url( __FILE__ ) . 'css/bt-deals-grid.css', array(), $this->version, 'all' );
+		// Ensure grid styles are loaded
+		Bigtricks_Deals_Content_Helper::ensure_grid_styles_loaded();
 
 		$atts = shortcode_atts( array(
 			'category'    => '',
@@ -107,14 +107,12 @@ class Bigtricks_Deals_Public {
 			'same_day'    => 'false',
 		), $atts, 'loot-deals' );
 
-		// Enqueue archive script if filters are enabled
-		if ( 'true' === $atts['show_filters'] ) {
-			wp_enqueue_script( 'bt-deals-archive', plugin_dir_url( __FILE__ ) . 'js/bt-deals-archive.js', array( 'jquery' ), $this->version, true );
-			wp_localize_script( 'bt-deals-archive', 'btDealsAjax', array(
-				'ajaxurl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'bt_deals_nonce' ),
-			) );
-		}
+		// Always enqueue archive script for load more functionality
+		wp_enqueue_script( 'bt-deals-archive', plugin_dir_url( __FILE__ ) . 'js/bt-deals-archive.js', array( 'jquery' ), $this->version, true );
+		wp_localize_script( 'bt-deals-archive', 'btDealsAjax', array(
+			'ajaxurl' => admin_url( 'admin-ajax.php' ),
+			'nonce'   => wp_create_nonce( 'bt_deals_nonce' ),
+		) );
 
 		$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
 
@@ -181,7 +179,7 @@ class Bigtricks_Deals_Public {
 			echo '</div>';
 
 			if ( $deals_query->max_num_pages > 1 ) {
-				echo '<div class="bt-deals-load-more-wrapper">';
+				echo '<div style="text-align:center" class="bt-deals-load-more-wrapper">';
 				echo '<button class="bt-deals-load-more" data-page="2" data-max-pages="' . esc_attr( $deals_query->max_num_pages ) . '" data-atts="' . esc_attr( json_encode( $atts ) ) . '">Load More Deals</button>';
 				echo '</div>';
 			}
@@ -221,6 +219,9 @@ class Bigtricks_Deals_Public {
 	 */
 	public function load_deal_archive_template( $template ) {
 		if ( is_post_type_archive( 'deal' ) ) {
+			// Enqueue necessary styles for archive page
+			wp_enqueue_style( 'bt-deals-archive', plugin_dir_url( __FILE__ ) . 'css/bt-deals-archive.css', array(), $this->version, 'all' );
+
 			$new_template = plugin_dir_path( dirname( __FILE__ ) ) . 'templates/archive-deal.php';
 			if ( file_exists( $new_template ) ) {
 				return $new_template;
@@ -391,7 +392,7 @@ class Bigtricks_Deals_Public {
 		check_ajax_referer( 'bt_deals_nonce', 'nonce' );
 
 		$page = intval( $_POST['page'] );
-		$atts = json_decode( stripslashes( $_POST['atts'] ), true );
+		$atts = isset( $_POST['atts'] ) ? $_POST['atts'] : array();
 		$filters = isset( $_POST['filters'] ) ? $_POST['filters'] : array();
 
 		$args = array(
@@ -470,19 +471,7 @@ class Bigtricks_Deals_Public {
 			$args['meta_query'] = $meta_query;
 		}
 
-		// Exclude expired deals
-		$args['meta_query'][] = array(
-			'relation' => 'OR',
-			array(
-				'key'     => '_btdeals_is_expired',
-				'value'   => 'off',
-				'compare' => '=',
-			),
-			array(
-				'key'     => '_btdeals_is_expired',
-				'compare' => 'NOT EXISTS',
-			),
-		);
+	
 
 		$deals_query = new WP_Query( $args );
 
@@ -626,9 +615,14 @@ class Bigtricks_Deals_Public {
 					<select id="bt-category">
 						<option value="">All Categories</option>
 						<?php
+						// Get the "Loot Deals" parent category
+						$loot_deals_parent = get_term_by('slug', 'loot-deals', 'category');
+						$parent_id = $loot_deals_parent ? $loot_deals_parent->term_id : 0;
+
 						$categories = get_terms( array(
 							'taxonomy' => 'category',
 							'hide_empty' => true,
+							'parent' => $parent_id,
 						) );
 						foreach ( $categories as $category ) {
 							echo '<option value="' . esc_attr( $category->term_id ) . '">' . esc_html( $category->name ) . '</option>';
@@ -713,10 +707,15 @@ class Bigtricks_Deals_Public {
 				</div>
 				<div class="bt-filter-content bt-filter-categories" id="categories-content">
 					<?php
+					// Get the "Loot Deals" parent category
+					$loot_deals_parent = get_term_by('slug', 'loot-deals', 'category');
+					$parent_id = $loot_deals_parent ? $loot_deals_parent->term_id : 0;
+
 					$categories = get_terms([
 						'taxonomy' => 'category',
 						'hide_empty' => true,
-						'number' => 10
+						'number' => 10,
+						'parent' => $parent_id
 					]);
 
 					if ($categories && !is_wp_error($categories)) {

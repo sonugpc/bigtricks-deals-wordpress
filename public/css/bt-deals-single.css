@@ -95,14 +95,69 @@
     position: absolute;
     top: var(--bt-spacing);
     left: var(--bt-spacing);
-    background: var(--bt-error);
+    background: linear-gradient(135deg, var(--bt-error), #dc2626);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bt-product-tag {
+    position: absolute;
+    bottom: var(--bt-spacing);
+    left: var(--bt-spacing);
+    background: var(--bt-accent);
     color: white;
     padding: var(--bt-spacing-xs) var(--bt-spacing-sm);
     border-radius: var(--bt-radius);
-    font-weight: 700;
-    font-size: 0.875rem;
+    font-weight: 600;
+    font-size: 0.75rem;
     box-shadow: var(--bt-shadow);
     z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Status Flyer for Verify Label */
+.bt-status-flyer {
+    position: absolute;
+    top: var(--bt-spacing);
+    right: var(--bt-spacing);
+    background: linear-gradient(135deg, var(--bt-success), #059669);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.65rem;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bt-status-flyer.bt-expired {
+    background: linear-gradient(135deg, var(--bt-error), #dc2626);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.bt-status-flyer .bt-status-content {
+    display: flex;
+    align-items: center;
+    gap: var(--bt-spacing-xs);
+}
+
+.bt-status-flyer i {
+    font-size: 0.875rem;
 }
 
 .bt-gallery-thumbs {
@@ -757,8 +812,8 @@
 .bt-main-content {
     background: var(--bt-bg-primary);
     padding: var(--bt-spacing-2xl);
-    border-radius: var(--bt-radius-lg);
-    box-shadow: var(--bt-shadow);
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
     word-wrap: break-word;
 }
 

@@ -12,36 +12,29 @@
 .bt-deal-card {
     position: relative;
     background: white;
-    border-radius: var(--bt-radius);
+    border-radius: 1rem;
     overflow: hidden;
-    box-shadow: var(--bt-shadow);
-    transition: var(--bt-transition);
+    border: 1px solid #e2e8f0;
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.bt-deal-card:hover {
-    box-shadow: var(--bt-shadow-hover);
-    transform: translateY(-4px);
-}
-
 .bt-deal-badge {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    background: var(--bt-danger);
+    background: linear-gradient(to right, rgb(40, 116, 240), rgb(255, 105, 180)) !important;
     color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 4px 4px;
+    border-radius: 0px 0px 5px 0px;
+    font-size: 11px;
+    font-weight: 700;
     z-index: 2;
+    text-transform: uppercase;
 }
 
 .bt-deal-image {
     position: relative;
-    height: 200px;
+    height: 120px;
     overflow: hidden;
     background: var(--bt-light);
 }
@@ -50,6 +43,83 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.bt-expired-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.bt-expired-label {
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Status Flyer for Verify Label */
+.bt-status-flyer {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: linear-gradient(135deg, green, #059669);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.65rem;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bt-status-flyer.bt-expired {
+    background: linear-gradient(135deg, var(--bt-error), #dc2626);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.bt-status-flyer .bt-status-content {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.bt-status-flyer i {
+    font-size: 0.75rem;
+}
+
+.bt-product-tag {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: var(--bt-accent);
+    color: white;
+    padding: 4px 8px;
+    border-radius: var(--bt-radius);
+    font-weight: 600;
+    font-size: 0.7rem;
+    box-shadow: var(--bt-shadow);
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .bt-deal-brand-logo {
@@ -71,16 +141,25 @@
 }
 
 .bt-deal-content {
-    padding: 16px;
+    padding: 12px;
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
 .bt-deal-title {
-    margin: 0 0 8px 0;
-    font-size: 16px;
-    line-height: 1.4;
+    margin: 0 0 6px 0;
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 600;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .bt-deal-title a {
@@ -92,25 +171,106 @@
     color: var(--g-color);
 }
 
+.bt-deal-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
 .bt-deal-store {
     color: #666;
-    font-size: 14px;
-    margin-bottom: 12px;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.bt-deal-store:hover {
+    color: var(--g-color);
+}
+
+.bt-deal-category {
+    color: #888;
+    font-size: 11px;
+}
+
+.bt-category-link-small {
+    color: #888;
+    text-decoration: none;
+}
+
+.bt-category-link-small:hover {
+    color: var(--g-color);
+}
+
+.bt-deal-time {
+    color: #888;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 500;
+}
+
+.bt-deal-time i {
+    font-size: 12px;
+    opacity: 0.7;
 }
 
 .bt-deal-pricing {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+}
+
+.bt-price-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.bt-deal-discount {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: auto;
+}
+
+/* Mobile responsive discount tag */
+@media (max-width: 480px) {
+    .bt-deal-discount {
+        font-size: 8px;
+        padding: 1px 3px;
+        letter-spacing: 0.3px;
+    }
+}
+
+.bt-discount-low {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #92400e;
+}
+
+.bt-discount-medium {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.bt-discount-high {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
 }
 
 .bt-deal-sale-price {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--bt-success);
-    margin-right: 8px;
 }
 
 .bt-deal-old-price {
-    font-size: 14px;
+    font-size: 12px;
     color: #999;
     text-decoration: line-through;
 }
@@ -276,13 +436,137 @@
     .bt-section-header {
         margin-bottom: 24px;
     }
-    
+
     .bt-section-title {
         font-size: 20px;
     }
-    
+
     .bt-section-subtitle {
         font-size: 14px;
+    }
+}
+
+/* Price Info Tooltip - Shared between single and archive pages */
+.bt-price-info-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #64748b;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: help;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 0;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.bt-price-info-btn:hover {
+    background: #2563eb;
+    transform: scale(1.1);
+}
+
+.bt-price-info-wrapper {
+    position: relative;
+    display: inline-block;
+    overflow: visible;
+}
+
+.bt-price-tooltip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    padding: 0.25rem;
+    min-width: 280px;
+    max-width: 350px;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    margin: 0;
+}
+
+.bt-price-info-wrapper:hover .bt-price-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.bt-tooltip-header {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bt-tooltip-content {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.bt-tooltip-content p {
+    margin: 0 0 0.25rem 0;
+}
+
+.bt-tooltip-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Arrow pointer for tooltip */
+.bt-price-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #e2e8f0;
+}
+
+.bt-price-tooltip::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid #ffffff;
+}
+
+/* Mobile tooltip adjustments */
+@media (max-width: 768px) {
+    .bt-price-tooltip {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 280px;
+        max-width: calc(100vw - 2rem);
+        margin: 0;
+        z-index: 1001;
+    }
+
+    .bt-price-info-wrapper:hover .bt-price-tooltip {
+        opacity: 1;
+        visibility: visible;
     }
 }
 .bt-section-title {
@@ -306,7 +590,13 @@
 }
 
 .bt-grid-4 {
-    grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (min-width: 1200px) {
+    .bt-grid-4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
@@ -333,12 +623,12 @@
     background: white;
     border-radius: var(--bt-radius);
     padding: 1.25rem;
-    box-shadow: var(--bt-shadow);
+    border: 2px solid #e2e8f0;
     transition: var(--bt-transition);
 }
 
 .bt-card:hover {
-    box-shadow: var(--bt-shadow-hover);
+    border-color: var(--bt-primary);
     transform: translateY(-0.125rem);
 }
 

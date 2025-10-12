@@ -135,8 +135,9 @@ class Bigtricks_Deals {
 
 		$plugin_admin = new Bigtricks_Deals_Admin( $this->get_plugin_name(), $this->get_version() );
 
-	$this->loader->add_action( 'init', $plugin_admin, 'register_deal_cpt' );
 	$this->loader->add_action( 'init', $plugin_admin, 'register_store_taxonomy' );
+	$this->loader->add_action( 'init', $plugin_admin, 'register_deal_cpt' );
+	$this->loader->add_action( 'init', $plugin_admin, 'create_loot_deals_categories' );
 	$this->loader->add_action( 'add_meta_boxes', $plugin_admin, 'add_deal_meta_box' );
 	$this->loader->add_action( 'save_post_deal', $plugin_admin, 'save_deal_meta_data' );
 	$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_rest_fields' );
@@ -161,7 +162,6 @@ class Bigtricks_Deals {
 		$this->loader->add_filter( 'archive_template', $plugin_public, 'load_deal_archive_template' );
 
 		$this->loader->add_action( 'wp_ajax_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
-		$this->loader->add_action( 'wp_ajax_nopriv_load_more_deals', $plugin_public, 'load_more_deals_ajax_handler' );
 		$this->loader->add_action( 'wp_ajax_filter_deals', $plugin_public, 'filter_deals_ajax_handler' );
 		$this->loader->add_action( 'wp_ajax_nopriv_filter_deals', $plugin_public, 'filter_deals_ajax_handler' );
 	}
