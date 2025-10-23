@@ -612,17 +612,19 @@ class Bigtricks_Deals_Admin {
 			'store'                  => 'string',
 			'brand_logo_url'         => 'string',
 			'discount_tag'           => 'string',
+			'product_id'             => 'string',
+			'last_price_updated_at'  => 'string',
 			'discount'               => 'integer',
 		];
 	
 		register_rest_field( 'deal', 'deal_meta', array(
-			'get_callback'    => function( $object, $field_name, $request ) {
+			'get_callback'    => function( $object, $field_name, $request ) use ( $meta_fields ) {
 				$post_id = $object['id'];
 				$all_meta_raw = get_post_meta( $post_id );
 				$all_meta = array_map( function( $value ) {
 					return $value[0];
 				}, $all_meta_raw );
-	
+
 				$deal_meta = [];
 				foreach ( $meta_fields as $field => $type ) {
 					if ( 'discount' === $field ) {
@@ -631,19 +633,19 @@ class Bigtricks_Deals_Admin {
 					$meta_key = '_btdeals_' . $field;
 					$deal_meta[ $field ] = $all_meta[ $meta_key ] ?? '';
 				}
-	
+
 				// Calculate discount
 				$price = (float) ( $all_meta['_btdeals_offer_sale_price'] ?? 0 );
 				$mrp   = (float) ( $all_meta['_btdeals_offer_old_price'] ?? 0 );
 				$deal_meta['discount'] = ( $mrp > 0 && $price < $mrp ) ? round( ( ( $mrp - $price ) / $mrp ) * 100 ) : 0;
-	
+
 				return $deal_meta;
 			},
-			'update_callback' => function( $value, $object, $field_name ) {
+			'update_callback' => function( $value, $object, $field_name ) use ( $meta_fields ) {
 				if ( ! is_array( $value ) ) {
 					return new WP_Error( 'rest_invalid_param', __( 'Invalid data format for deal_meta.', 'bigtricks-deals' ), array( 'status' => 400 ) );
 				}
-	
+
 				foreach ( $value as $key => $field_value ) {
 					if ( array_key_exists( $key, $meta_fields ) && 'discount' !== $key ) {
 						update_post_meta( $object->ID, '_btdeals_' . $key, sanitize_text_field( $field_value ) );
