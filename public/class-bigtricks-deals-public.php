@@ -389,7 +389,6 @@ class Bigtricks_Deals_Public {
 	 * @since 1.0.0
 	 */
 	public function load_more_deals_ajax_handler() {
-		check_ajax_referer( 'bt_deals_nonce', 'nonce' );
 
 		$page = intval( $_POST['page'] );
 		$atts = isset( $_POST['atts'] ) ? $_POST['atts'] : array();
@@ -498,7 +497,6 @@ class Bigtricks_Deals_Public {
 	 * @since 1.0.0
 	 */
 	public function load_more_content_callback() {
-		check_ajax_referer( 'store_content_nonce', 'nonce' );
 
 		$store_id = isset( $_POST['store_id'] ) ? intval( $_POST['store_id'] ) : 0;
 		$content_type = isset( $_POST['content_type'] ) ? sanitize_text_field( $_POST['content_type'] ) : '';

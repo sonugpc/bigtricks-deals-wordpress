@@ -233,7 +233,6 @@
             type: 'POST',
             data: {
                 action: 'load_more_deals',
-                nonce: btDealsAjax.nonce,
                 page: page,
                 atts: atts,
                 filters: filters
