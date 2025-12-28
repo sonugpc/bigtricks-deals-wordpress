@@ -1,7 +1,4 @@
-/* Archive Page Styles */
-.bt-deals-archive-page {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+
 .pd-15{
     padding: 15px;
 }
@@ -135,6 +132,109 @@
     line-height: 1.6;
 }
 
+/* SEO Content Section */
+.bt-seo-content-section {
+    margin-bottom: 3rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.bt-seo-content-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 1rem;
+}
+
+.bt-seo-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.bt-seo-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.bt-seo-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.bt-seo-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.bt-seo-ctas {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.bt-seo-stat {
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+}
+
+.bt-seo-stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffd700;
+    margin-bottom: 0.25rem;
+}
+
+.bt-seo-stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.bt-seo-cta-btn {
+    background: #ffd700;
+    color: #333;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.bt-seo-cta-btn:hover {
+    background: #ffed4e;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+    color: #333;
+}
+
 /* Section Headers */
 .bt-section-header {
     text-align: center;
@@ -235,39 +335,92 @@
 
 .bt-categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
 }
 
 .bt-category-card {
-    background: white;
-    border-radius: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 1.5rem;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
+    border: 2px solid #f0f2f5;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.bt-category-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    border-color: var(--g-color);
+}
+
+.bt-category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--g-color), #ff8c42);
 }
 
 .bt-category-link {
     display: block;
     text-decoration: none;
     color: inherit;
-    padding: 2rem;
+    padding: 2.5rem 2rem;
     height: 100%;
+    position: relative;
+    z-index: 1;
 }
 
 .bt-category-content {
     text-align: center;
+    position: relative;
+}
+
+.bt-category-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--g-color), #ff8c42);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(255, 107, 53, 0.3);
 }
 
 .bt-category-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.bt-category-description {
+    color: #718096;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
 .bt-category-count {
-    color: var(--g-color);
-    font-weight: 500;
+    display: inline-block;
+    background: var(--g-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
 }
 
 /* Stores Section */
@@ -324,58 +477,412 @@
     margin: 0;
 }
 
-/* Newsletter Section */
-.bt-newsletter-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 60px 0;
+/* Subscription Section */
+.bt-subscription-section {
+    margin-bottom: 5rem;
 }
 
-.bt-newsletter-content {
-    text-align: center;
-    max-width: 500px;
+.bt-subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
     margin: 0 auto;
 }
 
-.bt-newsletter-title {
-    font-size: 2rem;
+.bt-subscription-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bt-subscription-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.bt-subscription-icon {
+    margin-bottom: 1.5rem;
+    display: inline-block;
+}
+
+.bt-subscription-title {
+    font-size: 1.25rem;
     font-weight: 700;
+    color: #333;
     margin-bottom: 0.5rem;
 }
 
-.bt-newsletter-subtitle {
-    margin-bottom: 2rem;
-    opacity: 0.9;
+.bt-subscription-description {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
 }
 
-.bt-newsletter-form {
+.bt-subscription-btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.bt-whatsapp-btn {
+    background: #25D366;
+    color: white;
+}
+
+.bt-whatsapp-btn:hover {
+    background: #128C7E;
+    color: white;
+}
+
+.bt-telegram-btn {
+    background: #0088cc;
+    color: white;
+}
+
+.bt-telegram-btn:hover {
+    background: #006699;
+    color: white;
+}
+
+.bt-twitter-btn {
+    background: #000000;
+    color: white;
+}
+
+.bt-twitter-btn:hover {
+    background: #333333;
+    color: white;
+}
+
+.bt-android-btn {
+    background: linear-gradient(135deg, #00d4aa, #00c4a0);
+    color: white;
+}
+
+.bt-android-btn:hover {
+    background: linear-gradient(135deg, #00c4a0, #00b494);
+    color: white;
+}
+
+/* Telegram CTA Block */
+.bt-telegram-cta-block {
+    background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    margin-bottom: 3rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.bt-telegram-cta-block::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="50" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="50" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="90" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.bt-telegram-cta-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+}
+
+.bt-telegram-cta-icon {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.bt-telegram-cta-text {
+    flex: 1;
+    min-width: 250px;
+}
+
+.bt-telegram-cta-text h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.bt-telegram-cta-text p {
+    margin-bottom: 1rem;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+.bt-telegram-cta-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.bt-telegram-stat {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    font-weight: 500;
+}
+
+.bt-telegram-main-cta {
+    background: #ffffff;
+    color: #0088cc;
+    padding: 0.875rem 1.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bt-telegram-main-cta:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    color: #006699;
+}
+
+.bt-telegram-main-cta svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Pulse Icon */
+.bt-pulse-icon {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: #ff4757;
+    border-radius: 50%;
+    margin-right: 8px;
+    position: relative;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(255, 71, 87, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
+    }
+}
+
+/* Telegram Deals Section */
+.bt-telegram-deals-section {
+    margin-bottom: 5rem;
+}
+
+
+/* Horizontal Scroll Container */
+.bt-telegram-scroll-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 1rem;
+}
+
+.bt-telegram-deals-wrapper {
     display: flex;
     gap: 1rem;
-    max-width: 400px;
-    margin: 0 auto;
+    padding: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
 }
 
-.bt-newsletter-form input {
+
+
+.bt-loading-spinner {
+    text-align: center;
+    color: #666;
+}
+
+.bt-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--g-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+
+.bt-telegram-deal-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    min-width: 320px;
+    max-width: 350px;
+    min-height: 200px;
+    flex-shrink: 0;
+}
+
+.bt-telegram-deal-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-color: var(--g-color);
+}
+
+
+
+@keyframes livePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(255, 71, 87, 0.4);
+    }
+}
+
+.bt-deal-image {
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.bt-deal-image img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.bt-telegram-deal-card:hover .bt-deal-image img {
+    transform: scale(1.05);
+}
+
+.bt-telegram-deal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
     flex: 1;
-    padding: 0.75rem 1rem;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
 }
 
-.bt-newsletter-form button {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    background: #ffd700;
-    color: #333;
+.bt-deal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.bt-telegram-deal-text {
+    color: #718096;
+    line-height: 1.5;
+    margin: 0;
+    font-size: 0.9rem;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.bt-deal-price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--g-color);
+    margin: 0.5rem 0;
+    display: inline-block;
+    background: rgba(255, 107, 53, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    align-self: flex-start;
+}
+
+.bt-telegram-deal-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.bt-telegram-date {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.bt-telegram-link {
+    color: #0088cc;
+    text-decoration: none;
+    font-size: 0.85rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s ease;
+    transition: color 0.3s ease;
 }
 
-.bt-newsletter-form button:hover {
-    background: #ffed4e;
+.bt-telegram-link:hover {
+    color: #006699;
+    text-decoration: underline;
+}
+
+.bt-no-deals,
+.bt-error-message {
+    text-align: center;
+    color: #666;
+    font-size: 1.1rem;
+    margin: 2rem 0;
+}
+
+.bt-error-message {
+    color: #dc3545;
 }
 
 /* Sidebar Layout */
@@ -446,6 +953,8 @@
 .bt-filter-content {
     padding: 1rem 1.5rem;
     display: block;
+    max-height: 400px;
+    overflow: auto;
 }
 
 .bt-filter-categories .bt-filter-content,
@@ -607,8 +1116,235 @@
     border-color: #adb5bd;
 }
 
+/* Additional Design Blocks */
+.bt-features-section {
+    margin-bottom: 5rem;
+}
+
+.bt-features-grid {
+    display: grid;
+    gap: 2rem;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.bt-feature-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bt-feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.bt-feature-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--g-color), #ff8c42);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.bt-feature-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.bt-feature-description {
+    color: #666;
+    line-height: 1.5;
+}
+
+.bt-testimonials-section {
+    margin-bottom: 5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 1rem;
+    padding: 3rem;
+}
+
+.bt-testimonials-grid {
+    display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+    gap: 2rem;
+}
+
+.bt-testimonial-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    border: 1px solid #e2e8f0;
+    position: relative;
+}
+
+.bt-testimonial-quote {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #555;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.bt-testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.bt-testimonial-avatar {
+    width: 50px;
+    height: 50px;
+    background: var(--g-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.bt-testimonial-info h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.bt-testimonial-info p {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* App Download Button */
+.bt-app-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #00d4aa, #00c4a0);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+    border: none;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.bt-app-download-btn:hover {
+    background: linear-gradient(135deg, #00c4a0, #00b494);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 212, 170, 0.4);
+    color: white;
+}
+
+.bt-app-download-btn i {
+    font-size: 1.1rem;
+}
+
+/* Handle Broken Images */
+.bt-deal-image img {
+    display: block;
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    background: #f8f9fa;
+}
+
+.bt-deal-image img[src=""],
+.bt-deal-image img:not([src]) {
+    content: url('https://www.bigtricks.in/assets/no-post.jpg');
+}
+
+/* Stores Filter Scrollbar - Only for filter sections */
+.bt-filter-stores .bt-filter-content {
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--g-color) #f0f0f0;
+}
+
+.bt-filter-stores .bt-filter-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.bt-filter-stores .bt-filter-content::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.bt-filter-stores .bt-filter-content::-webkit-scrollbar-thumb {
+    background: var(--g-color);
+    border-radius: 3px;
+}
+
+.bt-filter-stores .bt-filter-content::-webkit-scrollbar-thumb:hover {
+    background: #e55a2b;
+}
+
+/* Remove Extra Paddings */
+.bt-archive-main {
+    padding: 20px 0;
+}
+
+
+
+
+
+/* Telegram Deals - Show 1.5 deals on mobile */
+@media (max-width: 768px) {
+    .bt-telegram-deals-wrapper {
+        width: calc(100% * 1.5);
+    }
+
+    .bt-telegram-deal-card {
+        min-width: 280px;
+        max-width: 300px;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+    .bt-seo-content-section {
+        padding: 1rem;
+        max-height: 50vh;
+        overflow: hidden;
+    }
+
+    .bt-seo-title {
+        font-size: 1.5rem;
+    }
+
+    .bt-seo-subtitle {
+        font-size: 1rem;
+    }
+
+    .bt-seo-ctas {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .bt-seo-stat {
+        min-width: auto;
+    }
+
     .bt-hero-title {
         font-size: 2.5rem;
     }
@@ -640,6 +1376,16 @@
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     }
 
+    .bt-telegram-cta-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .bt-telegram-cta-stats {
+        justify-content: center;
+    }
+
     .bt-newsletter-form {
         flex-direction: column;
     }
@@ -647,5 +1393,20 @@
     .bt-newsletter-form input,
     .bt-newsletter-form button {
         width: 100%;
+    }
+
+    /* Remove extra paddings on mobile */
+    .bt-section-header {
+        margin-bottom: 2rem;
+    }
+
+    .bt-features-grid,
+    .bt-testimonials-grid {
+        gap: 1rem;
+        grid-template-columns: 1fr;
+    }
+
+    .bt-subscription-grid {
+        gap: 1rem;
     }
 }
