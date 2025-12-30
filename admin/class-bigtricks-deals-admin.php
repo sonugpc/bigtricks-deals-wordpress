@@ -800,6 +800,11 @@ class Bigtricks_Deals_Admin {
 			'post_type'    => 'deal',
 		);
 
+		// Add custom slug if provided
+		if ( ! empty( $params['slug'] ) ) {
+			$post_data['post_name'] = sanitize_title( $params['slug'] );
+		}
+
 		$post_id = wp_insert_post( $post_data, true );
 
 		if ( is_wp_error( $post_id ) ) {
@@ -857,17 +862,26 @@ class Bigtricks_Deals_Admin {
 
 		// Handle the offer thumbnail
 		if ( ! empty( $params['offer_thumbnail_url'] ) ) {
-			// These files are needed for media_sideload_image()
-			require_once( ABSPATH . 'wp-admin/includes/media.php' );
-			require_once( ABSPATH . 'wp-admin/includes/file.php' );
-			require_once( ABSPATH . 'wp-admin/includes/image.php' );
-
 			$image_url = esc_url_raw( $params['offer_thumbnail_url'] );
-			$image_id = media_sideload_image( $image_url, $post_id, null, 'id' );
 
-			if ( ! is_wp_error( $image_id ) ) {
-				set_post_thumbnail( $post_id, $image_id );
+			// Check if URL is from Telegram
+			$is_telegram_url = strpos( $image_url, 'telegram.org' ) !== false ||
+			                   strpos( $image_url, 't.me' ) !== false;
+
+			if ( $is_telegram_url ) {
+				// Upload Telegram images to WordPress media library
+				require_once( ABSPATH . 'wp-admin/includes/media.php' );
+				require_once( ABSPATH . 'wp-admin/includes/file.php' );
+				require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+				$image_id = media_sideload_image( $image_url, $post_id, null, 'id' );
+
+				if ( ! is_wp_error( $image_id ) ) {
+					set_post_thumbnail( $post_id, $image_id );
+				}
 			}
+			// For non-Telegram URLs, just save the URL to meta (already handled above)
+			// and don't set as post thumbnail
 		}
 
 		return new WP_REST_Response( array( 'url' => get_permalink( $post_id ) ), 200 );

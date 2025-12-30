@@ -78,7 +78,7 @@ class Bigtricks_Deals_Content_Helper {
         $deal_data['post_id'] = $post_id;
         $deal_data['post_date'] = $post->post_date;
         $deal_data['post_date_gmt'] = $post->post_date_gmt;
-        $deal_data['title'] = ! empty( $deal_data['product_name'] ) ? $deal_data['product_name'] : $post->post_title;
+        $deal_data['title'] = ! empty( $post->post_title ) ? $post->post_title : $deal_data['product_name'];
         $deal_data['description'] = ! empty( $deal_data['short_description'] ) ? $deal_data['short_description'] : $post->post_excerpt;
         $deal_data['button_text'] = ! empty( $deal_data['button_text'] ) ? $deal_data['button_text'] : __( 'Get Deal', 'bigtricks-deals' );
 
