@@ -3,7 +3,7 @@
  * Plugin Name:       Bigtricks Deals & Store Taxonomy
  * Plugin URI:        https://bigtricks.in
  * Description:       Adds a "Deal" custom post type with product details, store taxonomy, and REST API support.
- * Version:           2.0.0
+ * Version:           2.1.0
  * Author:            Bigtricks
  * Author URI:        https://bigtricks.in
  * License:           GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Define constants
  */
-define( 'BTDEALS_VERSION', '2.0.0' );
+define( 'BTDEALS_VERSION', '2.1.0' );
 define( 'BTDEALS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BTDEALS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

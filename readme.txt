@@ -3,7 +3,7 @@ Contributors: sonugpc
 Tags: deals, offers, coupons, products, shortcodes, custom post type
 Requires at least: 5.0
 Tested up to: 6.0
-Stable tag: 1.0.0
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -94,9 +94,10 @@ The Bigtricks Deals plugin provides a REST API endpoint for publishing deals.
 | Parameter             | Type    | Required | Description                                                                                              |
 | --------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------- |
 | `title`               | string  | Yes      | The title of the deal.                                                                                   |
+| `slug`                | string  | No       | Custom URL slug for the deal post.                                                                       |
 | `offer_url`           | string  | Yes      | The URL for the deal.                                                                                    |
 | `content`             | string  | No       | The full description of the deal. Shortcodes are supported.                                              |
-| `offer_thumbnail_url` | string  | No       | The URL of the image to be used as the featured image.                                                   |
+| `offer_thumbnail_url` | string  | No       | The URL of the image. Telegram URLs are uploaded to media library; others are saved as external URLs.   |
 | `product_name`        | string  | No       | The name of the product.                                                                                 |
 | `short_description`   | string  | No       | A short description of the product. HTML is supported.                                                   |
 | `product_feature`     | string  | No       | The features of the product. HTML is supported.                                                          |
@@ -132,6 +133,12 @@ curl -X POST http://your-wordpress-site.com/wp-json/bigtricks-deals/v1/publish \
 ```
 
 == Changelog ==
+
+= 2.1.0 =
+* Added optional `slug` parameter to publish API endpoint for custom URL slugs
+* Enhanced image handling: Telegram URLs are uploaded to media library, other URLs are saved externally
+* Improved title display logic: Post titles now take precedence over product names on single deal pages and archive grids
+* Updated API documentation with new parameters and behaviors
 
 = 1.0.0 =
 * Initial release.
