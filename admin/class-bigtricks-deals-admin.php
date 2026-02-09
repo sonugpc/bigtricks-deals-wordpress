@@ -124,7 +124,7 @@ class Bigtricks_Deals_Admin {
 			"show_in_rest" => true,
 			"rest_base" => "deals",
 			"rest_controller_class" => "WP_REST_Posts_Controller",
-			"has_archive" => "deals",
+			"has_archive" => "loot-deals",
 			"show_in_menu" => true,
 			"show_in_nav_menus" => true,
 			"delete_with_user" => false,
