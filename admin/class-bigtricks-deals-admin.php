@@ -342,13 +342,13 @@ class Bigtricks_Deals_Admin {
 				</tr>
 				<tr>
 					<th><?php _e( 'Mask Coupon Code?', 'bigtricks-deals' ); ?></th>
-					<td><input type="checkbox" id="btdeals_mask_coupon" name="btdeals_mask_coupon" <?php checked( $fields['mask_coupon'], 'on' ); ?>>
+					<td><input type="checkbox" id="btdeals_mask_coupon" name="btdeals_mask_coupon" <?php checked( $fields['mask_coupon'], '1' ); ?>>
 					<label for="btdeals_mask_coupon"><?php _e( 'Yes', 'bigtricks-deals' ); ?></label>
 					<p class="description"><?php _e( 'Meta key: <code>_btdeals_mask_coupon</code>', 'bigtricks-deals' ); ?></p></td>
 				</tr>
 				<tr>
 					<th><?php _e( 'Offer is Expired?', 'bigtricks-deals' ); ?></th>
-					<td><input type="checkbox" id="btdeals_is_expired" name="btdeals_is_expired" <?php checked( $fields['is_expired'], 'on' ); ?>>
+					<td><input type="checkbox" id="btdeals_is_expired" name="btdeals_is_expired" <?php checked( $fields['is_expired'], '1' ); ?>>
 					<label for="btdeals_is_expired"><?php _e( 'Yes', 'bigtricks-deals' ); ?></label>
 					<p class="description"><?php _e( 'Meta key: <code>_btdeals_is_expired</code>', 'bigtricks-deals' ); ?></p></td>
 				</tr>
@@ -570,10 +570,10 @@ class Bigtricks_Deals_Admin {
 			}
 		}
 	
-		// Checkboxes
+		// Checkboxes — store as '1'/'0' so (bool) casting works correctly in templates.
 		$checkboxes = ['mask_coupon', 'is_expired'];
 		foreach ( $checkboxes as $checkbox ) {
-			$value = isset( $_POST[ 'btdeals_' . $checkbox ] ) ? 'on' : 'off';
+			$value = isset( $_POST[ 'btdeals_' . $checkbox ] ) ? '1' : '0';
 			update_post_meta( $post_id, '_btdeals_' . $checkbox, $value );
 		}
 	

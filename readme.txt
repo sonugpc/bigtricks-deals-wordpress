@@ -19,12 +19,13 @@ The Bigtricks Deals plugin provides a comprehensive solution for creating, manag
 *   **Store Taxonomy:** Organize your deals by store.
 *   **Comprehensive Deal Fields:** Includes fields for offer URL, product name, short description, disclaimer, old price, sale price, coupon code, expiration date, and more.
 *   **Media Library Integration:** Easily upload thumbnails and brand logos for your deals.
-*   **Minimalistic Single Deal Page:** A clean, modern, and responsive design for single deal pages.
-*   **AJAX-Powered Similar Deals Carousel:** Display similar deals in a touch-friendly carousel.
 *   **Social Sharing:** Allow users to share deals on Facebook, Twitter, and WhatsApp.
 *   **Shortcodes:** Display single deals or a grid of deals anywhere on your site.
 *   **Optimized for Performance:** Efficiently loads assets and follows WordPress best practices.
 *   **SEO Friendly:** Integrates with Rank Math and includes Product Schema markup.
+*   **Template-Agnostic Rendering:** Uses your active theme templates by default for single and archive pages.
+
+For restoring plugin-level custom templates in the future, see: `docs/template-restore-guide.md`
 
 == Installation ==
 
@@ -81,6 +82,10 @@ Use the `[loot-deal id="123"]` shortcode, replacing "123" with the ID of your de
 
 Use the `[loot-deals]` shortcode. You can also use the `category`, `store`, and `count` attributes to customize the grid.
 
+= We removed the plugin archive/single templates. How can we restore them later? =
+
+Follow the step-by-step guide in `docs/template-restore-guide.md`.
+
 == API ==
 
 The Bigtricks Deals plugin provides a REST API endpoint for publishing deals.
@@ -133,6 +138,11 @@ curl -X POST http://your-wordpress-site.com/wp-json/bigtricks-deals/v1/publish \
 ```
 
 == Changelog ==
+
+= 2.1.1 =
+* Removed plugin-level archive and single template loading hooks.
+* Removed obsolete template files and template-only assets.
+* Added restore documentation: `docs/template-restore-guide.md`.
 
 = 2.1.0 =
 * Added optional `slug` parameter to publish API endpoint for custom URL slugs
