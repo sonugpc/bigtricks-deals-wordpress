@@ -764,6 +764,12 @@ class Bigtricks_Deals_Admin {
 			'callback' => array( $this, 'create_deal_from_api' ),
 			'permission_callback' => array( $this, 'check_if_admin' ),
 		) );
+
+		register_rest_route( 'bigtricks-deals/v1', '/check', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'check_deal_exists' ),
+			'permission_callback' => '__return_true',
+		) );
 	}
 
 	/**
@@ -885,5 +891,39 @@ class Bigtricks_Deals_Admin {
 		}
 
 		return new WP_REST_Response( array( 'url' => get_permalink( $post_id ) ), 200 );
+	}
+
+	/**
+	 * Check if a deal exists by product_id.
+	 *
+	 * @since 1.0.0
+	 * @param WP_REST_Request $request
+	 * @return array
+	 */
+	public function check_deal_exists( $request ) {
+		$product_id = $request->get_param( 'product_id' );
+
+		if ( empty( $product_id ) ) {
+			return new WP_Error( 'missing_product_id', 'Product ID is required', array( 'status' => 400 ) );
+		}
+
+		$args = array(
+			'post_type'      => 'deal',
+			'meta_key'       => '_btdeals_product_id',
+			'meta_value'     => $product_id,
+			'posts_per_page' => 1,
+		);
+
+		$posts = get_posts( $args );
+
+		if ( ! empty( $posts ) ) {
+			return array(
+				'exists'   => true,
+				'post_id'  => $posts[0]->ID,
+				'title'    => $posts[0]->post_title,
+			);
+		}
+
+		return array( 'exists' => false );
 	}
 }
